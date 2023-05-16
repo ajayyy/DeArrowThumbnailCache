@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import re
 from typing import Any, cast
-import requests
 from retry import retry
+import yt_dlp # pyright: ignore[reportMissingTypeStubs]
 
 default_max_height = 720
 
@@ -27,28 +27,18 @@ def get_playback_url(video_id: str, height: int = default_max_height) -> Playbac
 
 @retry(tries=3, delay=1, backoff=2)
 def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
-    url = "https://www.youtube.com/youtubei/v1/player"
-    data = {
-        "context": {
-            "client": {
-                "clientName": "WEB",
-                "clientVersion": "2.20230327.07.00"
-            }
-        },
-        "videoId": video_id
-    }
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    with yt_dlp.YoutubeDL({}) as ydl:
+        info: Any = ydl.extract_info(url, download=False) # pyright: ignore[reportUnknownMemberType]
 
-    result = requests.post(url, json=data)
-    result.raise_for_status()
+        formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore[reportGeneralTypeIssues, reportUnknownMemberType, reportOptionalSubscript]
 
-    playback_urls = result.json()["streamingData"]["adaptiveFormats"]
+        if type(formats) is list:
+            formatted_urls = [PlaybackUrl(url["url"], url["width"], url["height"], url["fps"]) 
+                for url in cast(list[dict[str, Any]], formats) if "height" in url and url["height"] is not None]
+            formatted_urls.reverse()
+            formatted_urls.sort(key=lambda url: url.height, reverse=True)
 
-    if type(playback_urls) is list:
-        formatted_urls = [PlaybackUrl(url["url"], url["width"], url["height"], url["fps"]) 
-            for url in cast(list[dict[str, Any]], playback_urls) if "width" in url]
-        formatted_urls.reverse()
-        formatted_urls.sort(key=lambda url: url.height, reverse=True)
-
-        return formatted_urls
-    else:
-        raise ValueError("Failed to parse playback URLs: {video_id}")
+            return formatted_urls
+        else:
+            raise ValueError("Failed to parse playback URLs: {video_id}")
