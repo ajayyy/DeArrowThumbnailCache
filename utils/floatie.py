@@ -2,7 +2,7 @@ import requests
 import json
 
 IT_CLIENT = {
-  API_KEY = AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w,
+  API_KEY = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
   CLIENT_VERSION = "17.31.35",
   CLIENT_NAME = "3",
   ANDROID_VERSION = "12"
