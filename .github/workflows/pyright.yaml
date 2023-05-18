@@ -17,6 +17,8 @@ jobs:
         with:
           python-version: "3.10"
       - run: pip install -r requirements.txt
+      - run: sudo apt-get update
+      - run: sudo apt-get install pyright
       - name: Run Linter
         timeout-minutes: 5
-        run: mypy parsing requester tests
+        run: pyright

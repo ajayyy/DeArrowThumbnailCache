@@ -1,0 +1,12 @@
+server:
+  host: localhost
+  port: 3001
+  reload: true
+thumbnail_storage:
+  path: "cache"
+  max_size: 100000000
+  max_before_async_generation: 15
+redis:
+  host: localhost
+  port: 32774
+default_max_height: 720

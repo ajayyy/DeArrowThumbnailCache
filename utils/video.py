@@ -3,8 +3,7 @@ import re
 from typing import Any, cast
 from retry import retry
 import yt_dlp # pyright: ignore[reportMissingTypeStubs]
-
-default_max_height = 720
+from utils.config import config
 
 @dataclass
 class PlaybackUrl:
@@ -14,9 +13,9 @@ class PlaybackUrl:
     fps: int
 
 def valid_video_id(video_id: str) -> bool:
-    return re.match(r"^[A-Za-z0-9_\-]{11}$", video_id) is not None
+    return type(video_id) is str and re.match(r"^[A-Za-z0-9_\-]{11}$", video_id) is not None
 
-def get_playback_url(video_id: str, height: int = default_max_height) -> PlaybackUrl:
+def get_playback_url(video_id: str, height: int = config["default_max_height"]) -> PlaybackUrl:
     playback_urls = get_playback_urls(video_id)
 
     for url in playback_urls:
@@ -31,7 +30,7 @@ def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
     with yt_dlp.YoutubeDL({}) as ydl:
         info: Any = ydl.extract_info(url, download=False) # pyright: ignore[reportUnknownMemberType]
 
-        formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore[reportGeneralTypeIssues, reportUnknownMemberType, reportOptionalSubscript]
+        formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
 
         if type(formats) is list:
             formatted_urls = [PlaybackUrl(url["url"], url["width"], url["height"], url["fps"]) 
