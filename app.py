@@ -42,6 +42,8 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             result = (await wait_for_message(job_id)) == "true"
         except TimeoutError:
             raise HTTPException(status_code=404, detail="Failed to generate thumbnail due to timeout")
+    else:
+        raise HTTPException(status_code=404, detail="Thumbnail not generated yet")
 
     if result:
         return handle_thumbnail_response(videoID, time, title, response)
