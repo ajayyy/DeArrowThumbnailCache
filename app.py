@@ -52,6 +52,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     
 def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = get_thumbnail_from_files(video_id, time, title) if time is not None else get_latest_thumbnail_from_files(video_id)
+    response.headers["X-Timestamp"] = str(thumbnail.time)
     if thumbnail.title:
         response.headers["X-Title"] = thumbnail.title
 

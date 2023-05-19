@@ -14,6 +14,7 @@ metadata_format: str = ".txt"
 @dataclass
 class Thumbnail:
     image: bytes
+    time: float
     title: str | None = None
 
 def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
@@ -102,9 +103,9 @@ def get_thumbnail_from_files(video_id: str, time: float, title: str | None = Non
 
         if title is None and os.path.exists(metadata_filename):
             with open(metadata_filename, "r") as metadata_file:
-                return Thumbnail(image_data, metadata_file.read())
+                return Thumbnail(image_data, time, metadata_file.read())
         else:
-            return Thumbnail(image_data)
+            return Thumbnail(image_data, time)
     
 def get_file_paths(video_id: str, time: float) -> tuple[str, str, str]:
     if not valid_video_id(video_id):
