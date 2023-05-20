@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.middleware.cors import CORSMiddleware
 from rq.queue import Queue
 from utils.config import config
 from utils.redis_handler import redis_conn, wait_for_message
@@ -6,6 +7,14 @@ from utils.redis_handler import redis_conn, wait_for_message
 from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Timestamp", "X-Title"]
+)
 
 queue_high = Queue("high", connection=redis_conn)
 queue_low = Queue("default", connection=redis_conn)
