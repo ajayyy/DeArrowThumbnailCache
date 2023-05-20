@@ -28,7 +28,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
         playback_url = get_playback_url(video_id)
 
         # Round down time to nearest frame be consistent with browsers
-        time = int(time * playback_url.fps) / playback_url.fps
+        rounded_time = int(time * playback_url.fps) / playback_url.fps
 
         output_folder, output_filename, metadata_filename = get_file_paths(video_id, time)
         pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
         (
             FFmpeg() # pyright: ignore[reportUnknownMemberType]
             .option("y")
-            .input(playback_url.url, ss=time)
+            .input(playback_url.url, ss=rounded_time)
             .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
             .execute()
         )
@@ -112,6 +112,7 @@ def get_file_paths(video_id: str, time: float) -> tuple[str, str, str]:
         raise ValueError(f"Invalid video ID: {video_id}")
     if type(time) is not float:
         raise ValueError(f"Invalid time: {time}")
+    
 
     output_folder = get_folder_path(video_id)
     output_filename = f"{output_folder}/{time}{image_format}"
