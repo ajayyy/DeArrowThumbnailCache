@@ -33,7 +33,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
 
     if time is None:
         # If we got here with a None time, then there is no thumbnail to pull from
-        raise HTTPException(status_code=404, detail="Thumbnail not cached")
+        raise HTTPException(status_code=204, detail="Thumbnail not cached")
 
     job_id = get_job_id(videoID, time)
     queue = queue_high if generateNow else queue_low
@@ -50,14 +50,14 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         try:
             result = (await wait_for_message(job_id)) == "true"
         except TimeoutError:
-            raise HTTPException(status_code=404, detail="Failed to generate thumbnail due to timeout")
+            raise HTTPException(status_code=204, detail="Failed to generate thumbnail due to timeout")
     else:
-        raise HTTPException(status_code=404, detail="Thumbnail not generated yet")
+        raise HTTPException(status_code=204, detail="Thumbnail not generated yet")
 
     if result:
         return handle_thumbnail_response(videoID, time, title, response)
     else:
-        raise HTTPException(status_code=404, detail="Failed to generate thumbnail")
+        raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
     
 def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = get_thumbnail_from_files(video_id, time, title) if time is not None else get_latest_thumbnail_from_files(video_id)
