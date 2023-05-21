@@ -27,7 +27,17 @@ def get_playback_url(video_id: str, height: int = config["default_max_height"]) 
 @retry(tries=3, delay=1, backoff=2)
 def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
     url = f"https://www.youtube.com/watch?v={video_id}"
-    with yt_dlp.YoutubeDL({}) as ydl:
+    with yt_dlp.YoutubeDL({
+        "extractor-args": {
+            "youtube": {
+                "player_client": "android",
+                "skip": "translated_subs,hls,dash"
+            },
+            "youtube-tab": {
+                "skip": "webpage"
+            }
+        }
+    }) as ydl:
         info: Any = ydl.extract_info(url, download=False) # pyright: ignore[reportUnknownMemberType]
 
         formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
