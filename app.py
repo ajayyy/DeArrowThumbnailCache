@@ -39,7 +39,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     queue = queue_high if generateNow else queue_low
 
     job = queue.fetch_job(job_id)
-    if job is None or job.is_finished:
+    if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail, # pyright: ignore[reportUnknownMemberType]
                         args=(videoID, time, title), job_id=job_id)
