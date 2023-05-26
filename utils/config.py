@@ -20,6 +20,7 @@ class Config(TypedDict):
     thumbnail_storage: ThumbnailStorage
     redis: RedisConfig
     default_max_height: int
+    debug: bool
 
 
 config: Config = yaml.safe_load(open("config.yaml"))

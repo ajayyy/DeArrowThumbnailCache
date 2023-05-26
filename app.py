@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from rq.queue import Queue
 from utils.config import config
 from utils.redis_handler import redis_conn, wait_for_message
+from utils.logger import log
 
 from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
 
@@ -50,13 +51,16 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         try:
             result = (await wait_for_message(job_id)) == "true"
         except TimeoutError:
+            log("Failed to generate thumbnail due to timeout")
             raise HTTPException(status_code=204, detail="Failed to generate thumbnail due to timeout")
     else:
+        log("Thumbnail not generated yet", job.get_position())
         raise HTTPException(status_code=204, detail="Thumbnail not generated yet")
 
     if result:
         return handle_thumbnail_response(videoID, time, title, response)
     else:
+        log("Failed to generate thumbnail")
         raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
     
 def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:

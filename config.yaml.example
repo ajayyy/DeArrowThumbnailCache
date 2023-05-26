@@ -10,3 +10,4 @@ redis:
   host: localhost
   port: 32774
 default_max_height: 720
+debug: false
