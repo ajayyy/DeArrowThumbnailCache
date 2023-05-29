@@ -17,7 +17,7 @@ class Thumbnail:
     time: float
     title: str | None = None
 
-def generate_thumbnail(video_id: str, time: float, officialTime: bool, title: str | None) -> None:
+def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
     try:
         now = time_module.time()
         if not valid_video_id(video_id):
@@ -47,9 +47,6 @@ def generate_thumbnail(video_id: str, time: float, officialTime: bool, title: st
 
         redis_conn.publish(get_job_id(video_id, time), "true")
         print(f"Generated thumbnail for {video_id} at {time} in {time_module.time() - now} seconds")
-
-        if officialTime:
-            redis_conn.set(get_best_time_key(video_id), time)
 
     except Exception as e:
         print(f"Failed to generate thumbnail for {video_id} at {time}: {e}")

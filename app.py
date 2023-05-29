@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from rq.queue import Queue
 from utils.config import config
-from utils.redis_handler import redis_conn, wait_for_message
+from utils.redis_handler import get_async_redis_conn, redis_conn, wait_for_message
 from utils.logger import log
 
-from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
+from utils.thumbnail import generate_thumbnail, get_best_time_key, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
 
 app = FastAPI()
 app.add_middleware(
@@ -28,6 +28,9 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             or type(generateNow) is not bool:
         raise HTTPException(status_code=400, detail="Invalid parameters")
 
+    if officialTime and time is not None:
+        await (await get_async_redis_conn()).set(get_best_time_key(videoID), time) # pyright: ignore[reportUnknownMemberType]
+
     try:
         return await handle_thumbnail_response(videoID, time, title, response)
     except FileNotFoundError:
@@ -36,6 +39,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     if time is None:
         # If we got here with a None time, then there is no thumbnail to pull from
         raise HTTPException(status_code=204, detail="Thumbnail not cached")
+    
 
     job_id = get_job_id(videoID, time)
     queue = queue_high if generateNow else queue_low
@@ -61,7 +65,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail, # pyright: ignore[reportUnknownMemberType]
-                        args=(videoID, time, officialTime, title), job_id=job_id)
+                        args=(videoID, time, title), job_id=job_id)
     
     result: bool = False
     if generateNow or ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
