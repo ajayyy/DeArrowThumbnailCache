@@ -40,6 +40,23 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     queue = queue_high if generateNow else queue_low
 
     job = queue.fetch_job(job_id)
+    other_queue_job = queue_low.fetch_job(job_id) if queue == queue_high else queue_high.fetch_job(job_id)
+    if other_queue_job is not None:
+        if other_queue_job.is_started:
+            # It is already started, use it
+            job = other_queue_job
+        elif queue == queue_high:
+            # Old queue is low, prefer new one
+            queue_low.remove(other_queue_job) # pyright: ignore[reportUnknownMemberType]
+        elif job is not None:
+            # New queue is low, old queue is high, prefer old one
+            queue.remove(job) # pyright: ignore[reportUnknownMemberType]
+            job = other_queue_job
+        else:
+            # New queue is low, old queue is high, prefer old one
+            job = other_queue_job
+
+
     if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail, # pyright: ignore[reportUnknownMemberType]
