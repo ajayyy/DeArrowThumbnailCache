@@ -6,7 +6,7 @@ from redis.asyncio.client import PubSub
 import time
 from utils.config import config
 
-redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"])
+redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"]) # pyright: ignore[reportUnknownMemberType]
 async_redis_conn: "AsyncRedis[str] | None" = None
 
 async def init() -> None:

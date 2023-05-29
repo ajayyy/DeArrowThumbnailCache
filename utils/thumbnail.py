@@ -6,7 +6,7 @@ import pathlib
 from utils.video import get_playback_url, valid_video_id
 from utils.config import config
 import time as time_module
-from utils.redis_handler import redis_conn
+from utils.redis_handler import get_async_redis_conn, redis_conn
 
 image_format: str = ".webp"
 metadata_format: str = ".txt"
@@ -17,7 +17,7 @@ class Thumbnail:
     time: float
     title: str | None = None
 
-def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
+def generate_thumbnail(video_id: str, time: float, officialTime: bool, title: str | None) -> None:
     try:
         now = time_module.time()
         if not valid_video_id(video_id):
@@ -48,12 +48,15 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
         redis_conn.publish(get_job_id(video_id, time), "true")
         print(f"Generated thumbnail for {video_id} at {time} in {time_module.time() - now} seconds")
 
+        if officialTime:
+            redis_conn.set(get_best_time_key(video_id), time)
+
     except Exception as e:
         print(f"Failed to generate thumbnail for {video_id} at {time}: {e}")
         redis_conn.publish(get_job_id(video_id, time), "false")
         raise e
 
-def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
+async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
 
@@ -62,20 +65,27 @@ def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     files = os.listdir(output_folder)
     files.sort(key=lambda x: os.path.getmtime(os.path.join(output_folder, x)), reverse=True)
 
-    selected_file: str | None = None
-    for file in files:
-        # First try latest metadata file
-        # Most recent with a title is probably best
-        if file.endswith(metadata_format):
-            selected_file = file
-            break
+    best_time = await (await get_async_redis_conn()).get(get_best_time_key(video_id))
 
-    if selected_file is None:
-        # Fallback to latest image
+    selected_file: str | None = f"{best_time}{image_format}" if best_time else None
+    
+    # Fallback to latest image
+    if selected_file is None or selected_file not in files:
+        selected_file = None
+
         for file in files:
-            if file.endswith(image_format):
+            # First try latest metadata file
+            # Most recent with a title is probably best
+            if file.endswith(metadata_format):
                 selected_file = file
                 break
+
+        if selected_file is None:
+            # Fallback to latest image
+            for file in files:
+                if file.endswith(image_format):
+                    selected_file = file
+                    break
 
     if selected_file is not None:
         # Remove file extension
@@ -128,3 +138,6 @@ def get_folder_path(video_id: str) -> str:
 
 def get_job_id(video_id: str, time: float) -> str:
     return f"{video_id}-{time}"
+    
+def get_best_time_key(video_id: str) -> str:
+    return f"best-{video_id}"
