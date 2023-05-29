@@ -96,4 +96,5 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host=config["server"]["host"], # type: ignore
-                port=config["server"]["port"], reload=config["server"]["reload"])
+                port=config["server"]["port"], reload=config["server"]["reload"],
+                log_level="info" if config["debug"] else "warning")
