@@ -4,10 +4,14 @@ from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
 from redis.asyncio.client import PubSub
 import time
+from rq.queue import Queue
 from utils.config import config
 
 redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"]) # pyright: ignore[reportUnknownMemberType]
 async_redis_conn: "AsyncRedis[str] | None" = None
+
+queue_high = Queue("high", connection=redis_conn)
+queue_low = Queue("default", connection=redis_conn)
 
 async def init() -> None:
     await get_async_redis_conn()
@@ -39,4 +43,4 @@ async def wait_for_message(key: str, timeout: int = 15) -> str:
             raise TimeoutError("Timed out waiting for message")
 
 
-asyncio.get_event_loop().run_in_executor(None, init)
+asyncio.get_event_loop().run_until_complete(init())

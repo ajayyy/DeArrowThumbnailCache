@@ -1,8 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from rq.queue import Queue
 from utils.config import config
-from utils.redis_handler import get_async_redis_conn, redis_conn, wait_for_message
+from utils.redis_handler import get_async_redis_conn, wait_for_message, queue_high, queue_low
 from utils.logger import log
 
 from utils.thumbnail import generate_thumbnail, get_best_time_key, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
@@ -16,9 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Timestamp", "X-Title"]
 )
-
-queue_high = Queue("high", connection=redis_conn)
-queue_low = Queue("default", connection=redis_conn)
 
 @app.get("/api/v1/getThumbnail")
 async def get_thumbnail(response: Response, videoID: str, time: float | None = None,
@@ -86,7 +82,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
     
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
-    thumbnail = get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
+    thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
     response.headers["X-Timestamp"] = str(thumbnail.time)
     if thumbnail.title:
         response.headers["X-Title"] = thumbnail.title.strip()
