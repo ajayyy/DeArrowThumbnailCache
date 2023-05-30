@@ -38,7 +38,7 @@ def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
             }
         }
     }) as ydl:
-        info: Any = ydl.extract_info(url, download=False) # pyright: ignore[reportUnknownMemberType]
+        info: Any = ydl.extract_info(url, download=False)
 
         formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
 

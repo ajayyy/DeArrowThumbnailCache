@@ -47,3 +47,8 @@ max-complexity = 10
 
 [[tool.mypy.overrides]]
 disallow_untyped_decorators=true
+
+[tool.pyright]
+reportUnknownMemberType=false
+reportUnknownVariableType=false
+reportUnknownArgumentType=false

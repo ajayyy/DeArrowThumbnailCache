@@ -4,6 +4,7 @@ from typing import TypedDict
 class ServerSettings(TypedDict):
     host: str
     port: int
+    worker_health_check_port: int
     reload: bool
 
 class ThumbnailStorage(TypedDict):

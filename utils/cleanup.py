@@ -46,7 +46,7 @@ def check_if_cleanup_needed() -> None:
         existing_job = queue_high.fetch_job(job_id)
 
         if existing_job is None or existing_job.is_finished or existing_job.is_failed:
-            queue_high.enqueue(cleanup, job_id=job_id, at_front=True) # pyright: ignore[reportUnknownMemberType]
+            queue_high.enqueue(cleanup, job_id=job_id, at_front=True)
 
 
 def get_folder_size(path: str) -> Tuple[int, int]:
@@ -77,10 +77,10 @@ def delete_video(video_id: str) -> None:
 async def update_last_used(video_id: str) -> None:
     await (await get_async_redis_conn()).zadd(name=last_used_key(), mapping={
         last_used_element_key(video_id): int(time.time())
-    }) # pyright: ignore[reportUnknownArgumentType]
+    })
 
 async def add_storage_used(size: int) -> None:
-    await (await get_async_redis_conn()).incrby(storage_used_key(), size) # pyright: ignore[reportUnknownArgumentType]
+    await (await get_async_redis_conn()).incrby(storage_used_key(), size)
 
 def last_used_key() -> str:
     return "last-used"

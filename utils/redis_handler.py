@@ -7,7 +7,7 @@ import time
 from rq.queue import Queue
 from utils.config import config
 
-redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"]) # pyright: ignore[reportUnknownMemberType]
+redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"])
 async_redis_conn: "AsyncRedis[str] | None" = None
 
 queue_high = Queue("high", connection=redis_conn)
@@ -27,16 +27,16 @@ async def get_async_redis_conn() -> "AsyncRedis[str]":
 
 async def get_redis_pubsub() -> PubSub:
     redis_conn = await get_async_redis_conn()
-    redis_pubsub = redis_conn.pubsub(ignore_subscribe_messages=True) # pyright: ignore[reportUnknownMemberType]
+    redis_pubsub = redis_conn.pubsub(ignore_subscribe_messages=True)
     return redis_pubsub
 
 async def wait_for_message(key: str, timeout: int = 15) -> str:
     pubsub = await get_redis_pubsub()
-    await pubsub.subscribe(key) # pyright: ignore[reportUnknownMemberType]
+    await pubsub.subscribe(key)
 
     start_time = time.time()
     while True:
-        message = cast(dict[str, Any] | None, await pubsub.get_message(timeout=timeout)) # pyright: ignore[reportUnknownMemberType]
+        message = cast(dict[str, Any] | None, await pubsub.get_message(timeout=timeout))
         if message is not None:
             return message["data"].decode()
         elif time.time() - start_time > timeout:

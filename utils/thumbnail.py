@@ -40,7 +40,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
         pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
         (
-            FFmpeg() # pyright: ignore[reportUnknownMemberType]
+            FFmpeg()
             .option("y")
             .input(playback_url.url, ss=rounded_time)
             .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")

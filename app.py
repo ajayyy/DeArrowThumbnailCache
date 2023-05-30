@@ -25,7 +25,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         raise HTTPException(status_code=400, detail="Invalid parameters")
 
     if officialTime and time is not None:
-        await (await get_async_redis_conn()).set(get_best_time_key(videoID), time) # pyright: ignore[reportUnknownMemberType]
+        await (await get_async_redis_conn()).set(get_best_time_key(videoID), time)
 
     try:
         return await handle_thumbnail_response(videoID, time, title, response)
@@ -48,10 +48,10 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             job = other_queue_job
         elif queue == queue_high:
             # Old queue is low, prefer new one
-            queue_low.remove(other_queue_job) # pyright: ignore[reportUnknownMemberType]
+            queue_low.remove(other_queue_job)
         elif job is not None:
             # New queue is low, old queue is high, prefer old one
-            queue.remove(job) # pyright: ignore[reportUnknownMemberType]
+            queue.remove(job)
             job = other_queue_job
         else:
             # New queue is low, old queue is high, prefer old one
@@ -60,7 +60,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
 
     if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
-        job = queue.enqueue(generate_thumbnail, # pyright: ignore[reportUnknownMemberType]
+        job = queue.enqueue(generate_thumbnail,
                         args=(videoID, time, title), job_id=job_id)
     
     result: bool = False
