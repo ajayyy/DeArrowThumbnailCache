@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Run tests for scraper with pytest
+    name: Run tests with pytest
     runs-on: ubuntu-latest
 
     steps:
