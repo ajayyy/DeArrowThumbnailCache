@@ -8,17 +8,8 @@ on:
 
 jobs:
   lint:
-    name: Lint scraper with mypy
+    name: Lint with pyright
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - run: pip install -r requirements.txt
-      - run: sudo apt-get update
-      - run: sudo apt-get install pyright
-      - name: Run Linter
-        timeout-minutes: 5
-        run: pyright
+      - uses: jakebailey/pyright-action@12750e8237a25bfd24cfbc47fe195b082613b11d
