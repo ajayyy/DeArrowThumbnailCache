@@ -1,0 +1,15 @@
+name: Linting
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint with pyright
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: jakebailey/pyright-action@12750e8237a25bfd24cfbc47fe195b082613b11d

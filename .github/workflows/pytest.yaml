@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Run tests for scraper with pytest
+    name: Run tests with pytest
     runs-on: ubuntu-latest
 
     steps:
@@ -16,6 +16,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: Install ffmpeg
+        run: sudo apt update && sudo apt-get install ffmpeg -y
+      - name: Build the docker-compose stack
+        run: docker compose -f docker/docker-compose.yml up -d
+      - name: Check running containers
+        run: docker ps
       - run: pip install -r requirements.txt
       - name: Run Tests
         timeout-minutes: 5

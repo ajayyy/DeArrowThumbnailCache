@@ -46,5 +46,9 @@ target-version = "py310"
 max-complexity = 10
 
 [[tool.mypy.overrides]]
-module = 'curl_cffi'
-ignore_missing_imports = true
+disallow_untyped_decorators=true
+
+[tool.pyright]
+reportUnknownMemberType=false
+reportUnknownVariableType=false
+reportUnknownArgumentType=false
