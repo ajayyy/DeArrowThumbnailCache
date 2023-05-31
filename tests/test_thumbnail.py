@@ -10,7 +10,8 @@ from utils.redis_handler import reset_async_redis_conn, redis_conn
 from utils.thumbnail import generate_thumbnail, get_file_paths
 
 # Clear test cache folder
-shutil.rmtree("test-cache")
+if os.path.exists("test-cache"):
+    shutil.rmtree("test-cache")
 
 @pytest.fixture(scope="function", autouse=True)
 def setup():
