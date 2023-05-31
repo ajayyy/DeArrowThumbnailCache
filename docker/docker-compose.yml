@@ -1,5 +1,5 @@
 version: '3.3'
-name: thumbnail-generator
+name: thumbnail_generator
 services:
   redis:
     container_name: redis
