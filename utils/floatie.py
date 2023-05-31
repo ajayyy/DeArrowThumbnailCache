@@ -1,51 +1,65 @@
+from dataclasses import dataclass
 import requests
 import json
 
-IT_CLIENT = {
-  API_KEY = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
-  CLIENT_VERSION = "17.31.35",
-  CLIENT_NAME = "3",
-  ANDROID_VERSION = "12"
-  context: {
-    client: {
-      clientName: "ANDROID",
-      clientVersion: CLIENT_VERSION,
-      androidSdkVersion: 31,
-      osName: "Android",
-      osVersion: ANDROID_VERSION,
-      hl: "en",
-      gl: "US"
-    }
+class InnertubeError(Exception):
+    pass
+
+@dataclass
+class InnertubeDetails:
+    api_key: str
+    client_version: str
+    client_name: str
+    android_version: str
+
+innertube_details = InnertubeDetails(
+    api_key="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
+    client_version="17.31.35",
+    client_name="3",
+    android_version="12"
+)
+
+context = {
+  "client": {
+    "clientName": "ANDROID",
+    "clientVersion": innertube_details.client_version,
+    "androidSdkVersion": 31,
+    "osName": "Android",
+    "osVersion": innertube_details.android_version,
+    "hl": "en",
+    "gl": "US"
   }
 }
 
-def get_playback_url(video_id: str):
-  url = f"https://www.youtube.com/youtubei/v1/player?key={IT_CLIENT.API_KEY}"
+def fetch_playback_urls(video_id: str) -> list[dict[str, str | int]]:
+    url = f"https://www.youtube.com/youtubei/v1/player?key={innertube_details.api_key}"
 
-  payload = json.dumps({
-    "context": IT_CLIENT.context,
-    "videoId": video_id,
-    "params": "8AEB",
-    "playbackContext": {
-      "contentPlaybackContext": {
-        "html5Preference": "HTML5_PREF_WANTS"
-      }
-    },
-    "contentCheckOk": True,
-    "racyCheckOk": True
-  })
-  headers = {
-    'X-Youtube-Client-Name': IT_CLIENT.CLIENT_NAME,
-    'X-Youtube-Client-Version': IT_CLIENT.CLIENT_VERSION,
-    'Origin': 'https://www.youtube.com',
-    'User-Agent': f'com.google.android.youtube/{IT_CLIENT.CLIENT_VERSION} (Linux; U; Android {IT_CLIENT.ANDROID_VERSION}) gzip',
-    'Content-Type': 'application/json',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-us,en;q=0.5',
-    'Sec-Fetch-Mode': 'navigate',
-    'Connection': 'close'
-  }
+    payload = json.dumps({
+        "context": context,
+        "videoId": video_id,
+        "params": "8AEB",
+        "playbackContext": {
+            "contentPlaybackContext": {
+                "html5Preference": "HTML5_PREF_WANTS"
+            }
+        },
+        "contentCheckOk": True,
+        "racyCheckOk": True
+    })
+    headers = {
+        'X-Youtube-Client-Name': innertube_details.client_name,
+        'X-Youtube-Client-Version': innertube_details.client_version,
+        'Origin': 'https://www.youtube.com',
+        'User-Agent': f'com.google.android.youtube/{innertube_details.client_version} (Linux; U; Android {innertube_details.android_version}) gzip',
+        'Content-Type': 'application/json',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-us,en;q=0.5',
+        'Sec-Fetch-Mode': 'navigate',
+        'Connection': 'close'
+    }
 
-  response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload)
+    if not response.ok:
+        raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 
-print(response.text)
+    return response.json()["streamingData"]["adaptiveFormats"]
