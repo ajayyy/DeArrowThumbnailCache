@@ -25,6 +25,10 @@ async def get_async_redis_conn() -> "AsyncRedis[str]":
     await async_redis_conn.ping()
     return async_redis_conn
 
+def reset_async_redis_conn() -> None:
+    global async_redis_conn
+    async_redis_conn = None
+
 async def get_redis_pubsub() -> PubSub:
     redis_conn = await get_async_redis_conn()
     redis_pubsub = redis_conn.pubsub(ignore_subscribe_messages=True)

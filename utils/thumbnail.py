@@ -22,7 +22,7 @@ class Thumbnail:
 
 # Redis queue does not properly support async, and doesn't need it anyway since it is
 # only running one job at a time
-def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
+def generate_thumbnail(video_id: str, time: float, title: str | None, update_redis: bool = True) -> None:
     try:
         now = time_module.time()
         if not valid_video_id(video_id):
@@ -35,7 +35,8 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
         # Round down time to nearest frame be consistent with browsers
         rounded_time = int(time * playback_url.fps) / playback_url.fps
 
-        asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
+        if update_redis:
+            asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
         output_folder, output_filename, metadata_filename = get_file_paths(video_id, time)
         pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -47,13 +48,14 @@ def generate_thumbnail(video_id: str, time: float, title: str | None) -> None:
             .execute()
         )
 
-        if title:
+        if title is not None:
             with open(metadata_filename, "w") as metadata_file:
                 metadata_file.write(title)
 
         storage_used = (len(title.encode("utf-8")) if title else 0) + os.path.getsize(output_filename)
 
-        asyncio.get_event_loop().run_until_complete(add_storage_used(storage_used))
+        if update_redis:
+            asyncio.get_event_loop().run_until_complete(add_storage_used(storage_used))
         redis_conn.publish(get_job_id(video_id, time), "true")
         check_if_cleanup_needed()
 

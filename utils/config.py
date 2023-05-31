@@ -1,6 +1,8 @@
 import yaml
 from typing import TypedDict
 
+from utils.test_utils import in_test
+
 class ServerSettings(TypedDict):
     host: str
     port: int
@@ -25,4 +27,4 @@ class Config(TypedDict):
     debug: bool
 
 
-config: Config = yaml.safe_load(open("config.yaml"))
+config: Config = yaml.safe_load(open("config.yaml" if not in_test() else "tests/test_config.yaml"))

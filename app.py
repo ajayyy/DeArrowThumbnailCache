@@ -5,6 +5,7 @@ from utils.redis_handler import get_async_redis_conn, wait_for_message, queue_hi
 from utils.logger import log
 from typing import Any
 from rq.worker import Worker
+from utils.test_utils import in_test
 
 from utils.thumbnail import generate_thumbnail, get_best_time_key, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
 
@@ -63,7 +64,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail,
-                        args=(videoID, time, title), job_id=job_id)
+                        args=(videoID, time, title, not in_test()), job_id=job_id)
     
     result: bool = False
     if generateNow or ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
@@ -86,7 +87,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
     response.headers["X-Timestamp"] = str(thumbnail.time)
-    if thumbnail.title:
+    if thumbnail.title is not None:
         response.headers["X-Title"] = thumbnail.title.strip()
 
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
