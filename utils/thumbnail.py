@@ -165,7 +165,7 @@ def get_job_id(video_id: str, time: float) -> str:
 def get_best_time_key(video_id: str) -> str:
     return f"best-{video_id}"
 
-@retry(tries=3, delay=0.1, backoff=10)
+@retry(tries=5, delay=0.1, backoff=3)
 def publish_job_status(video_id: str, time: float, status: str) -> None:
     redis_conn.publish(get_job_id(video_id, time), status)
 

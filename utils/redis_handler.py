@@ -16,7 +16,7 @@ queue_low = Queue("default", connection=redis_conn)
 async def init() -> None:
     await get_async_redis_conn()
 
-@retry(tries=3, delay=0.1, backoff=10)
+@retry(tries=5, delay=0.1, backoff=3)
 async def get_async_redis_conn() -> "AsyncRedis[str]":
     global async_redis_conn
     if async_redis_conn is not None:
@@ -35,7 +35,7 @@ async def get_redis_pubsub() -> PubSub:
     redis_pubsub = redis_conn.pubsub(ignore_subscribe_messages=True)
     return redis_pubsub
 
-@retry(tries=3, delay=0.1, backoff=10)
+@retry(tries=5, delay=0.1, backoff=3)
 async def wait_for_message(key: str, timeout: int = 15) -> str:
     pubsub = await get_redis_pubsub()
     await pubsub.subscribe(key)
