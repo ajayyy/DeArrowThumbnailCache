@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sb-server:
+  worker:
     uses: ./.github/workflows/docker-build.yml
     with:
       name: "thumbnail-cache-worker"
