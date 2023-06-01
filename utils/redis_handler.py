@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, cast
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
@@ -45,6 +44,3 @@ async def wait_for_message(key: str, timeout: int = 15) -> str:
             return message["data"].decode()
         elif time.time() - start_time > timeout:
             raise TimeoutError("Timed out waiting for message")
-
-
-asyncio.get_event_loop().run_until_complete(init())
