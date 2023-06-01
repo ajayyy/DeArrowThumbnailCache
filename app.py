@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from utils.config import config
 from utils.redis_handler import wait_for_message, queue_high, queue_low, redis_conn
 from utils.logger import log
@@ -18,6 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Timestamp", "X-Title"]
 )
+
+@app.get("/")
+def root() -> RedirectResponse:
+    return RedirectResponse("https://github.com/ajayyy/DeArrowThumbnailCache")
 
 @app.get("/api/v1/getThumbnail")
 async def get_thumbnail(response: Response, videoID: str, time: float | None = None,
