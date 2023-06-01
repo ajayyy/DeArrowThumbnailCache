@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from utils.config import config
-from utils.redis_handler import get_async_redis_conn, wait_for_message, queue_high, queue_low, redis_conn
+from utils.redis_handler import wait_for_message, queue_high, queue_low, redis_conn
 from utils.logger import log
 from typing import Any
 from rq.worker import Worker
 from utils.test_utils import in_test
 
-from utils.thumbnail import generate_thumbnail, get_best_time_key, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files
+from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
 
 app = FastAPI()
 app.add_middleware(
@@ -28,7 +28,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         raise HTTPException(status_code=400, detail="Invalid parameters")
 
     if officialTime and time is not None:
-        await (await get_async_redis_conn()).set(get_best_time_key(videoID), time)
+        await set_best_time(videoID, time)
 
     try:
         return await handle_thumbnail_response(videoID, time, title, response)

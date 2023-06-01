@@ -4,12 +4,14 @@ import os
 import re
 from ffmpeg import FFmpeg # pyright: ignore[reportMissingTypeStubs]
 import pathlib
+
+from retry import retry
 from utils.cleanup import add_storage_used, check_if_cleanup_needed, update_last_used
 from utils.video import get_playback_url, valid_video_id
 from utils.config import config
 import time as time_module
 from utils.redis_handler import get_async_redis_conn, redis_conn
-from utils.logger import log
+from utils.logger import log, log_error
 
 image_format: str = ".webp"
 metadata_format: str = ".txt"
@@ -56,14 +58,14 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
 
         if update_redis:
             asyncio.get_event_loop().run_until_complete(add_storage_used(storage_used))
-        redis_conn.publish(get_job_id(video_id, time), "true")
+        publish_job_status(video_id, time, "true")
         check_if_cleanup_needed()
 
         log(f"Generated thumbnail for {video_id} at {time} in {time_module.time() - now} seconds")
 
     except Exception as e:
         log(f"Failed to generate thumbnail for {video_id} at {time}: {e}")
-        redis_conn.publish(get_job_id(video_id, time), "false")
+        publish_job_status(video_id, time, "false")
         raise e
 
 async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
@@ -75,9 +77,9 @@ async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     files = os.listdir(output_folder)
     files.sort(key=lambda x: os.path.getmtime(os.path.join(output_folder, x)), reverse=True)
 
-    best_time = await (await get_async_redis_conn()).get(get_best_time_key(video_id))
+    best_time = await get_best_time(video_id)
 
-    selected_file: str | None = f"{best_time}{image_format}" if best_time else None
+    selected_file: str | None = f"{best_time}{image_format}" if best_time is not None else None
     
     # Fallback to latest image
     if selected_file is None or selected_file not in files:
@@ -121,7 +123,10 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
             with open(metadata_filename, "w") as metadata_file:
                 metadata_file.write(title)
 
-        await update_last_used(video_id)
+        try:
+            await update_last_used(video_id)
+        except Exception as e:
+            log_error(f"Failed to update last used {e}")
 
         if title is None and os.path.exists(metadata_filename):
             with open(metadata_filename, "r") as metadata_file:
@@ -153,3 +158,13 @@ def get_job_id(video_id: str, time: float) -> str:
     
 def get_best_time_key(video_id: str) -> str:
     return f"best-{video_id}"
+
+@retry(tries=3, delay=0.1, backoff=10)
+def publish_job_status(video_id: str, time: float, status: str) -> None:
+    redis_conn.publish(get_job_id(video_id, time), status)
+
+async def set_best_time(video_id: str, time: float) -> None:
+    await (await get_async_redis_conn()).set(get_best_time_key(video_id), time)
+
+async def get_best_time(video_id: str) -> str | None:
+    return await (await get_async_redis_conn()).get(get_best_time_key(video_id))
