@@ -38,7 +38,10 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         rounded_time = int(time * playback_url.fps) / playback_url.fps
 
         if update_redis:
-            asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
+            try:
+                asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
+            except Exception as e:
+                log_error("Failed to update last used", e)
         output_folder, output_filename, metadata_filename = get_file_paths(video_id, time)
         pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -57,7 +60,10 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         storage_used = (len(title.encode("utf-8")) if title else 0) + os.path.getsize(output_filename)
 
         if update_redis:
-            asyncio.get_event_loop().run_until_complete(add_storage_used(storage_used))
+            try:
+                asyncio.get_event_loop().run_until_complete(add_storage_used(storage_used))
+            except Exception as e:
+                log_error("Failed to update storage used", e)
         publish_job_status(video_id, time, "true")
         check_if_cleanup_needed()
 
