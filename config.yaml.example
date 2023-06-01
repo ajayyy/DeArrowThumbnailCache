@@ -12,4 +12,5 @@ redis:
   host: localhost
   port: 32774
 default_max_height: 720
+status_auth_password: password
 debug: false

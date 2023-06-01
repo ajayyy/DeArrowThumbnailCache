@@ -24,6 +24,7 @@ class Config(TypedDict):
     thumbnail_storage: ThumbnailStorage
     redis: RedisConfig
     default_max_height: int
+    status_auth_password: str
     debug: bool
 
 
