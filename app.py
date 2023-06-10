@@ -92,7 +92,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
     response.headers["X-Timestamp"] = str(thumbnail.time)
-    response.headers["Cache-Control"] = "3600"
+    response.headers["Cache-Control"] = "max-age=3600"
     if thumbnail.title is not None:
         response.headers["X-Title"] = thumbnail.title.strip()
 
