@@ -37,20 +37,20 @@ async def get_redis_pubsub() -> PubSub:
 
 @retry(tries=5, delay=0.1, backoff=3)
 async def wait_for_message(key: str, timeout: int = 15) -> str:
-    pubsub = await get_redis_pubsub()
-    await pubsub.subscribe(key)
+    pubsub = None
+    try:
+        pubsub = await get_redis_pubsub()
+        await pubsub.subscribe(key)
 
-    start_time = time.time()
-    while True:
-        message = cast(dict[str, Any] | None, await pubsub.get_message(timeout=timeout))
-        if message is not None:
-            result = message["data"].decode()
+        start_time = time.time()
+        while True:
+            message = cast(dict[str, Any] | None, await pubsub.get_message(timeout=timeout))
+            if message is not None:
+                result = message["data"].decode()
+                return result
+            elif time.time() - start_time > timeout:
+                raise TimeoutError("Timed out waiting for message")
+    finally:
+        if pubsub is not None:
             await pubsub.unsubscribe(key)
             await pubsub.close()
-
-            return result
-        elif time.time() - start_time > timeout:
-            await pubsub.unsubscribe(key)
-            await pubsub.close()
-
-            raise TimeoutError("Timed out waiting for message")
