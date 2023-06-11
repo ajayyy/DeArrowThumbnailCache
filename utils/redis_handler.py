@@ -44,6 +44,13 @@ async def wait_for_message(key: str, timeout: int = 15) -> str:
     while True:
         message = cast(dict[str, Any] | None, await pubsub.get_message(timeout=timeout))
         if message is not None:
-            return message["data"].decode()
+            result = message["data"].decode()
+            await pubsub.unsubscribe(key)
+            await pubsub.close()
+
+            return result
         elif time.time() - start_time > timeout:
+            await pubsub.unsubscribe(key)
+            await pubsub.close()
+
             raise TimeoutError("Timed out waiting for message")
