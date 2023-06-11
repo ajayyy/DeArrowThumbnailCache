@@ -2,11 +2,9 @@ import threading
 from typing import Any
 from fastapi import FastAPI, HTTPException
 import uvicorn
-from redis import Redis
 from rq.worker import SimpleWorker as Worker, WorkerStatus, DequeueStrategy
+from utils.redis_handler import redis_conn
 from utils.config import config
-
-redis_conn = Redis(host=config["redis"]["host"], port=config["redis"]["port"])
 
 listen = ["high", "default"]
 worker = Worker(listen, connection=redis_conn)
