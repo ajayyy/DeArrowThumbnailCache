@@ -97,7 +97,10 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
     response.headers["X-Timestamp"] = str(thumbnail.time)
     response.headers["Cache-Control"] = "public, max-age=3600"
     if thumbnail.title is not None:
-        response.headers["X-Title"] = thumbnail.title.strip()
+        try:
+            response.headers["X-Title"] = thumbnail.title.strip()
+        except UnicodeEncodeError:
+            pass
 
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
 
