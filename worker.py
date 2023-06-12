@@ -13,10 +13,12 @@ health_check = FastAPI()
 
 @health_check.get("{full_path:path}")
 def get_health_check() -> dict[str, Any]:
-    if worker.state == WorkerStatus.SUSPENDED:
+    current_job = worker.get_current_job()
+
+    if worker.state == WorkerStatus.SUSPENDED \
+            or (worker.state == WorkerStatus.BUSY and current_job is None):
         raise HTTPException(status_code=500, detail="Worker suspended")
     
-    current_job = worker.get_current_job()
     return {
         "name": worker.name,
         "key": worker.key,
