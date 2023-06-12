@@ -65,8 +65,11 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             # New queue is low, old queue is high, prefer old one
             job = other_queue_job
 
+    if job is not None and job.is_failed:
+        # Wait until it leaves the queue to try again (500 seconds)
+        raise HTTPException(status_code=204, detail="Thumbnail failed to generate in the past")
 
-    if job is None or job.is_finished or job.is_failed:
+    if job is None or job.is_finished:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail,
                         args=(videoID, time, title, not in_test()), job_id=job_id, timeout="1m")
