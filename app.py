@@ -69,7 +69,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         job = queue.enqueue(generate_thumbnail,
-                        args=(videoID, time, title, not in_test()), job_id=job_id)
+                        args=(videoID, time, title, not in_test()), job_id=job_id, timeout="1m")
     
     result: bool = False
     if generateNow or ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
