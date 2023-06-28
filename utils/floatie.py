@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import requests
 import json
+from utils.config import config
 
 class InnertubeError(Exception):
     pass
@@ -57,8 +58,12 @@ def fetch_playback_urls(video_id: str) -> list[dict[str, str | int]]:
         'Sec-Fetch-Mode': 'navigate',
         'Connection': 'close'
     }
+    proxies = {
+        "http": config["proxy_url"],
+        "https": config["proxy_url"]
+    } if config["proxy_url"] is not None else None
 
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies)
     if not response.ok:
         raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 

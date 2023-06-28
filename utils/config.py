@@ -26,7 +26,11 @@ class Config(TypedDict):
     default_max_height: int
     status_auth_password: str
     try_floatie: bool
+    proxy_url: str | None
     debug: bool
 
 
 config: Config = yaml.safe_load(open("config.yaml" if not in_test() else "tests/test_config.yaml"))
+
+if "proxy_url" not in config:
+    config["proxy_url"] = None
