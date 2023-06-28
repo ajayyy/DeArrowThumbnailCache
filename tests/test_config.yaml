@@ -13,4 +13,5 @@ redis:
   port: 32774
 default_max_height: 720
 status_auth_password: password
+try_floatie: true
 debug: true
