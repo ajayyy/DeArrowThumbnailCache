@@ -67,17 +67,7 @@ def format_has_av1(format: dict[str, str | int]) -> bool:
 
 def fetch_playback_urls_from_ytdlp(video_id: str) -> list[dict[str, str | int]]:
     url = f"https://www.youtube.com/watch?v={video_id}"
-    with yt_dlp.YoutubeDL({
-        "extractor-args": {
-            "youtube": {
-                "player_client": "android",
-                "skip": "translated_subs,hls,dash"
-            },
-            "youtube-tab": {
-                "skip": "webpage"
-            }
-        }
-    }) as ydl:
+    with yt_dlp.YoutubeDL() as ydl:
         info: Any = ydl.extract_info(url, download=False)
 
         formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
