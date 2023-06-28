@@ -25,6 +25,7 @@ class Config(TypedDict):
     redis: RedisConfig
     default_max_height: int
     status_auth_password: str
+    try_floatie: bool
     debug: bool
 
 

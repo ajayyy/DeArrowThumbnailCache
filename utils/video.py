@@ -29,10 +29,12 @@ def get_playback_url(video_id: str, height: int = config["default_max_height"]) 
 def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
     formats: list[dict[str, str | int]] | None = None
     errors: list[Exception] = []
-    try:
-        formats = floatie.fetch_playback_urls(video_id)
-    except Exception as e:
-        errors.append(e)
+
+    if config["try_floatie"]:
+        try:
+            formats = floatie.fetch_playback_urls(video_id)
+        except Exception as e:
+            errors.append(e)
     
     if formats is None:
         # Fallback to ytdlp
