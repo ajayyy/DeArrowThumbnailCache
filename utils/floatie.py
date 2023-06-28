@@ -67,4 +67,8 @@ def fetch_playback_urls(video_id: str) -> list[dict[str, str | int]]:
     if not response.ok:
         raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 
-    return response.json()["streamingData"]["adaptiveFormats"]
+    data = response.json()
+    if data["videoDetails"]["videoId"] != video_id:
+        raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
+
+    return data["streamingData"]["adaptiveFormats"]
