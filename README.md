@@ -23,7 +23,7 @@ services:
       - net.ipv4.tcp_max_syn_backlog=3240000
     restart: always
   app:
-    container_name: worker
+    container_name: app
     image: ghcr.io/ajayyy/thumbnail-cache
     ports:
       - 3001:3001
