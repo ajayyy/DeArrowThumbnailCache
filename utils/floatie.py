@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import requests
 import json
-from utils.config import config
 
 class InnertubeError(Exception):
     pass
