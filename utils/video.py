@@ -16,8 +16,9 @@ class PlaybackUrl:
 def valid_video_id(video_id: str) -> bool:
     return type(video_id) is str and re.match(r"^[A-Za-z0-9_\-]{11}$", video_id) is not None
 
-def get_playback_url(video_id: str, height: int = config["default_max_height"]) -> PlaybackUrl:
-    playback_urls = get_playback_urls(video_id)
+def get_playback_url(video_id: str, proxy_url: str | None = None,
+                        height: int = config["default_max_height"]) -> PlaybackUrl:
+    playback_urls = get_playback_urls(video_id, proxy_url)
 
     for url in playback_urls:
         if url.height <= height:
@@ -26,20 +27,20 @@ def get_playback_url(video_id: str, height: int = config["default_max_height"]) 
     raise ValueError(f"Failed to find playback URL with height <= {height}")
 
 @retry(tries=3, delay=1, backoff=2)
-def get_playback_urls(video_id: str) -> list[PlaybackUrl]:
+def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]:
     formats: list[dict[str, str | int]] | None = None
     errors: list[Exception] = []
 
     if config["try_floatie"]:
         try:
-            formats = floatie.fetch_playback_urls(video_id)
+            formats = floatie.fetch_playback_urls(video_id, proxy_url)
         except Exception as e:
             errors.append(e)
     
     if formats is None:
         # Fallback to ytdlp
         try:
-            formats = fetch_playback_urls_from_ytdlp(video_id)
+            formats = fetch_playback_urls_from_ytdlp(video_id, proxy_url)
         except Exception as e:
             errors.append(e)
 
@@ -65,10 +66,10 @@ def format_has_av1(format: dict[str, str | int]) -> bool:
     return ("mimeType" in format and "av01" in cast(str, format["mimeType"])) \
         or  ("vcodec" in format and "av01" in cast(str, format["vcodec"]))
 
-def fetch_playback_urls_from_ytdlp(video_id: str) -> list[dict[str, str | int]]:
+def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
     url = f"https://www.youtube.com/watch?v={video_id}"
     with yt_dlp.YoutubeDL({
-        "proxy": config["proxy_url"]
+        "proxy": proxy_url or config["proxy_url"]
     }) as ydl:
         info: Any = ydl.extract_info(url, download=False)
 

@@ -32,7 +32,7 @@ context = {
   }
 }
 
-def fetch_playback_urls(video_id: str) -> list[dict[str, str | int]]:
+def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
     url = f"https://www.youtube.com/youtubei/v1/player?key={innertube_details.api_key}"
 
     payload = json.dumps({
@@ -58,10 +58,12 @@ def fetch_playback_urls(video_id: str) -> list[dict[str, str | int]]:
         'Sec-Fetch-Mode': 'navigate',
         'Connection': 'close'
     }
+
+    proxy_url = proxy_url or config["proxy_url"]
     proxies = {
-        "http": config["proxy_url"],
-        "https": config["proxy_url"]
-    } if config["proxy_url"] is not None else None
+        "http": proxy_url,
+        "https": proxy_url
+    } if proxy_url is not None else None
 
     response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies)
     if not response.ok:

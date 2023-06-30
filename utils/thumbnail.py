@@ -2,11 +2,12 @@ import asyncio
 from dataclasses import dataclass
 import os
 import re
-from ffmpeg import FFmpeg # pyright: ignore[reportMissingTypeStubs]
+from ffmpeg import FFmpeg, FFmpegError # pyright: ignore[reportMissingTypeStubs]
 import pathlib
 
 from retry import retry
 from utils.cleanup import add_storage_used, check_if_cleanup_needed, update_last_used
+from utils.proxy import get_proxy_url
 from utils.video import get_playback_url, valid_video_id
 from utils.config import config
 import time as time_module
@@ -32,27 +33,19 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         if type(time) is not float:
             raise ValueError(f"Invalid time: {time}")
         
-        playback_url = get_playback_url(video_id)
-
-        # Round down time to nearest frame be consistent with browsers
-        rounded_time = int(time * playback_url.fps) / playback_url.fps
-
         if update_redis:
             try:
                 asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
             except Exception as e:
                 log_error("Failed to update last used", e)
-        output_folder, output_filename, metadata_filename = get_file_paths(video_id, time)
-        pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
-        (
-            FFmpeg()
-            .option("y")
-            .input(playback_url.url, ss=rounded_time)
-            .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
-            .execute()
-        )
+        try:
+            generate_and_store_thumbnail(video_id, time)
+        except FFmpegError:
+            # try again with specified proxy
+            generate_and_store_thumbnail(video_id, time, get_proxy_url())
 
+        _, output_filename, metadata_filename = get_file_paths(video_id, time)
         if title is not None:
             with open(metadata_filename, "w") as metadata_file:
                 metadata_file.write(title)
@@ -73,6 +66,24 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         log(f"Failed to generate thumbnail for {video_id} at {time}: {e}")
         publish_job_status(video_id, time, "false")
         raise e
+    
+def generate_and_store_thumbnail(video_id: str, time: float, proxy_url: str | None = None) -> None:
+    playback_url = get_playback_url(video_id, proxy_url)
+
+    # Round down time to nearest frame be consistent with browsers
+    rounded_time = int(time * playback_url.fps) / playback_url.fps
+
+    output_folder, output_filename, _ = get_file_paths(video_id, time)
+    pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+    (
+        FFmpeg()
+        .option("y")
+        .option("http_proxy", proxy_url) #todo: don't pass if none
+        .input(playback_url.url, ss=rounded_time)
+        .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
+        .execute()
+    )
 
 async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     if not valid_video_id(video_id):

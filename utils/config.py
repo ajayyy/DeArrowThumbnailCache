@@ -27,6 +27,7 @@ class Config(TypedDict):
     status_auth_password: str
     try_floatie: bool
     proxy_url: str | None
+    proxy_token: str | None
     debug: bool
 
 
@@ -34,3 +35,5 @@ config: Config = yaml.safe_load(open("config.yaml" if not in_test() else "tests/
 
 if "proxy_url" not in config:
     config["proxy_url"] = None
+if "proxy_token" not in config:
+    config["proxy_token"] = None
