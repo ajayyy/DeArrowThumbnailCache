@@ -76,10 +76,12 @@ def generate_and_store_thumbnail(video_id: str, time: float, proxy_url: str | No
     output_folder, output_filename, _ = get_file_paths(video_id, time)
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
+    ffmpeg = FFmpeg()
+    if proxy_url is not None:
+        ffmpeg.option("http_proxy", proxy_url)
     (
-        FFmpeg()
+        ffmpeg
         .option("y")
-        .option("http_proxy", proxy_url) #todo: don't pass if none
         .input(playback_url.url, ss=rounded_time)
         .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
         .execute()
