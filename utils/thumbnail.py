@@ -62,7 +62,8 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         log(f"Failed to generate thumbnail for {video_id} at {time}: {e}")
         publish_job_status(video_id, time, "false")
         raise e
-    
+
+@retry(FFmpegError, tries=2, delay=1) 
 def generate_and_store_thumbnail(video_id: str, time: float) -> None:
     proxy_url = get_proxy_url() or config["proxy_url"]
     playback_url = get_playback_url(video_id, proxy_url)
