@@ -59,7 +59,6 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
         'Connection': 'close'
     }
 
-    proxy_url = proxy_url or config["proxy_url"]
     proxies = {
         "http": proxy_url,
         "https": proxy_url

@@ -8,7 +8,7 @@ import pathlib
 from retry import retry
 from utils.cleanup import add_storage_used, check_if_cleanup_needed, update_last_used
 from utils.proxy import get_proxy_url
-from utils.video import get_playback_url, valid_video_id
+from utils.video import PlaybackUrl, get_playback_url, valid_video_id
 from utils.config import config
 import time as time_module
 from utils.redis_handler import get_async_redis_conn, redis_conn
@@ -39,11 +39,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
             except Exception as e:
                 log_error("Failed to update last used", e)
 
-        try:
-            generate_and_store_thumbnail(video_id, time)
-        except FFmpegError:
-            # try again with specified proxy
-            generate_and_store_thumbnail(video_id, time, get_proxy_url())
+        generate_and_store_thumbnail(video_id, time)
 
         _, output_filename, metadata_filename = get_file_paths(video_id, time)
         if title is not None:
@@ -67,14 +63,27 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         publish_job_status(video_id, time, "false")
         raise e
     
-def generate_and_store_thumbnail(video_id: str, time: float, proxy_url: str | None = None) -> None:
+def generate_and_store_thumbnail(video_id: str, time: float) -> None:
+    proxy_url = get_proxy_url() or config["proxy_url"]
     playback_url = get_playback_url(video_id, proxy_url)
+
+    try:
+        generate_with_ffmpeg(video_id, time, playback_url)
+    except FFmpegError:
+        # the main proxy url used as a fallback rotates randomly, so is not consistent
+        if proxy_url is not None and proxy_url != config["proxy_url"]:
+            # try again through proxy
+            generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
+        else:
+            raise
+
+def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
+                            proxy_url: str | None = None) -> None:
+    output_folder, output_filename, _ = get_file_paths(video_id, time)
+    pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     # Round down time to nearest frame be consistent with browsers
     rounded_time = int(time * playback_url.fps) / playback_url.fps
-
-    output_folder, output_filename, _ = get_file_paths(video_id, time)
-    pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     ffmpeg = FFmpeg()
     if proxy_url is not None:

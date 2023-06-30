@@ -11,7 +11,7 @@ def get_wait_period() -> int:
 
 def fetch_proxies() -> list[Any]:
     if config["proxy_token"] is None:
-        raise ValueError("Proxy token not set in config.yaml")
+        return []
     
     next_wait_period = float(redis_conn.get("next_proxy_fetch") or 0)
     last_fetch = float(redis_conn.get("last_proxy_fetch") or 0)
@@ -37,9 +37,9 @@ def fetch_proxies() -> list[Any]:
     return json.loads(redis_conn.get("proxies") or "[]")
 
 
-def get_proxy_url() -> str:
+def get_proxy_url() -> str | None:
     if config["proxy_token"] is None:
-        raise ValueError("Proxy token not set in config.yaml")
+        return None
 
     proxies = fetch_proxies()
 
