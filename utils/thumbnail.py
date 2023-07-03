@@ -92,6 +92,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
     (
         ffmpeg
         .option("y")
+        .option("timelimit", "20")
         .input(playback_url.url, ss=rounded_time)
         .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
         .execute()
