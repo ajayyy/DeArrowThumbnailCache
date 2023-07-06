@@ -2,6 +2,7 @@ import asyncio
 from dataclasses import dataclass
 import os
 import re
+from typing import cast
 from ffmpeg import FFmpeg, FFmpegError # pyright: ignore[reportMissingTypeStubs]
 import pathlib
 
@@ -109,7 +110,7 @@ async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
 
     best_time = await get_best_time(video_id)
 
-    selected_file: str | None = f"{best_time}{image_format}" if best_time is not None else None
+    selected_file: str | None = f"{best_time.decode()}{image_format}" if best_time is not None else None
     
     # Fallback to latest image
     if selected_file is None or selected_file not in files:
@@ -196,5 +197,5 @@ def publish_job_status(video_id: str, time: float, status: str) -> None:
 async def set_best_time(video_id: str, time: float) -> None:
     await (await get_async_redis_conn()).set(get_best_time_key(video_id), time)
 
-async def get_best_time(video_id: str) -> str | None:
-    return await (await get_async_redis_conn()).get(get_best_time_key(video_id))
+async def get_best_time(video_id: str) -> bytes | None:
+    return cast(bytes | None, await (await get_async_redis_conn()).get(get_best_time_key(video_id)))
