@@ -1,5 +1,4 @@
 import os
-import random
 import shutil
 import time
 from typing import Tuple
@@ -46,14 +45,12 @@ def check_if_cleanup_needed() -> None:
 
     # If it has been 30 minutes, call cleanup anyway
     if storage_used > max_size or time.time() - last_storage_check > 30 * 60:
-        # Wait a random time before checking if existing job exists
-        time.sleep(random.randint(0, 10))
-
-
         job_id = get_cleanup_job_id()
         existing_job = queue_high.fetch_job(job_id)
 
-        if existing_job is None or (not existing_job.is_started and not existing_job.is_scheduled):
+        if existing_job is None or (existing_job.is_failed or existing_job.is_finished 
+                                    or existing_job.is_canceled or existing_job.is_deferred 
+                                    or existing_job.is_stopped):
             if existing_job is not None:
                 existing_job.delete()
             queue_high.enqueue(cleanup, job_id=job_id, at_front=True, job_timeout="2h")
