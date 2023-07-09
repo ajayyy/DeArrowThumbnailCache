@@ -13,5 +13,6 @@ jobs:
       username: "ajayyy"
       folder: "."
       file: "Dockerfile-worker"
+      target: "worker"
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
