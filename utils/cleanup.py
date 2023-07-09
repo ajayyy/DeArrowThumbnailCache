@@ -48,8 +48,8 @@ def check_if_cleanup_needed() -> None:
         job_id = get_cleanup_job_id()
         existing_job = queue_high.fetch_job(job_id)
 
-        if existing_job is None or existing_job.is_finished or existing_job.is_failed:
-            queue_high.enqueue(cleanup, job_id=job_id, at_front=True, timeout="2h")
+        if existing_job is None or not (existing_job.is_started or existing_job.is_scheduled):
+            queue_high.enqueue(cleanup, job_id=job_id, at_front=True, job_timeout="2h")
 
 
 def get_folder_size(path: str) -> Tuple[int, int]:
