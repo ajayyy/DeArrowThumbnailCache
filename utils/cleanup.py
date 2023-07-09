@@ -49,6 +49,8 @@ def check_if_cleanup_needed() -> None:
         existing_job = queue_high.fetch_job(job_id)
 
         if existing_job is None or (not existing_job.is_started and not existing_job.is_scheduled):
+            if existing_job is not None:
+                existing_job.delete()
             queue_high.enqueue(cleanup, job_id=job_id, at_front=True, job_timeout="2h")
 
 
