@@ -12,6 +12,7 @@ jobs:
       name: "thumbnail-cache-worker"
       username: "ajayyy"
       folder: "."
-      file: "Dockerfile-worker"
+      file: "Dockerfile"
+      target: "worker"
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
