@@ -16,8 +16,10 @@ def cleanup() -> None:
     redis_conn.set(storage_used_key(), folder_size)
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
+    target_storage_size = int(max_size * 0.9)
+
     storage_saved = 0
-    if folder_size > max_size:
+    if folder_size > target_storage_size:
         if file_count - get_size_of_last_used() > redis_offset_allowed:
             # Need to delete extra video's files
             with os.scandir(folder_path) as it:
@@ -25,12 +27,12 @@ def cleanup() -> None:
                     if entry.is_dir() and get_last_used_rank(entry.name) is None:
                         storage_saved += get_folder_size(entry.path)[0]
                         shutil.rmtree(entry.path)
-                    if folder_size - storage_saved <= max_size:
+                    if folder_size - storage_saved <= target_storage_size:
                         break
             
-        if folder_size - storage_saved > max_size:
+        if folder_size - storage_saved > target_storage_size:
             # Now use redis to find the best options to delete
-            while folder_size - storage_saved > max_size:
+            while folder_size - storage_saved > target_storage_size:
                 video_id = get_oldest_video_id()
                 storage_saved += get_folder_size(os.path.join(folder_path, video_id))[0]
                 delete_video(video_id)
