@@ -5,7 +5,7 @@ server:
   worker_health_check_port: 3002
 thumbnail_storage:
   path: "test-cache"
-  max_size: 110000
+  max_size: 111112
   redis_offset_allowed: 5
   max_before_async_generation: 15
 redis:
