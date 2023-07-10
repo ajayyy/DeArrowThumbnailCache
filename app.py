@@ -5,6 +5,7 @@ from utils.config import config
 from utils.redis_handler import wait_for_message, queue_high, queue_low, redis_conn
 from utils.logger import log
 from typing import Any
+from hmac import compare_digest
 from rq.worker import Worker
 from utils.test_utils import in_test
 
@@ -103,6 +104,7 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
 @app.get("/api/v1/status")
 def get_status(auth: str | None = None) -> dict[str, Any]:
     workers = Worker.all(connection=redis_conn)
+    is_authorized = auth is not None and compare_digest(auth, config["status_auth_password"])
 
     return {
         "queues": {
@@ -125,12 +127,12 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
                 "cancelled_jobs": queue_low.canceled_job_registry.count,
             },
         },
-        "workers": [get_worker_info(worker, auth) for worker in workers],
+        "workers": [get_worker_info(worker, is_authorized) for worker in workers],
         "workers_count": len(workers),
     }
 
 
-def get_worker_info(worker: Worker, auth: str | None) -> dict[str, Any]:
+def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
     current_job = worker.get_current_job()
     return {
         "name": worker.name,
@@ -145,7 +147,7 @@ def get_worker_info(worker: Worker, auth: str | None) -> dict[str, Any]:
             "ended_at": current_job.ended_at,
             "exc_info": current_job.exc_info,
             "meta": current_job.meta,
-        } if current_job is not None and auth == config["status_auth_password"] else None,
+        } if current_job is not None and is_authorized else None,
         "birth_date": worker.birth_date,
         "successful_job_count": worker.successful_job_count,
         "failed_job_count": worker.failed_job_count,
