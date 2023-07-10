@@ -43,7 +43,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     if time is None:
         # If we got here with a None time, then there is no thumbnail to pull from
         raise HTTPException(status_code=204, detail="Thumbnail not cached")
-    
+
 
     job_id = get_job_id(videoID, time)
     queue = queue_high if generateNow else queue_low
@@ -87,7 +87,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
     else:
         log("Failed to generate thumbnail")
         raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
-    
+
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
     response.headers["X-Timestamp"] = str(thumbnail.time)
@@ -129,9 +129,11 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
         "workers_count": len(workers),
     }
 
+
 def get_worker_info(worker: Worker, auth: str | None) -> dict[str, Any]:
     current_job = worker.get_current_job()
     return {
+        "name": worker.name,
         "state": worker.state,
         "current_job": {
             "id": current_job.id,
