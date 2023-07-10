@@ -12,7 +12,7 @@ def get_wait_period() -> int:
 def fetch_proxies() -> list[Any]:
     if config["proxy_token"] is None:
         return []
-    
+
     next_wait_period = float(redis_conn.get("next_proxy_fetch") or 0)
     last_fetch = float(redis_conn.get("last_proxy_fetch") or 0)
     if time.time() - last_fetch > next_wait_period:
@@ -23,7 +23,7 @@ def fetch_proxies() -> list[Any]:
             "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=100&ordering=-valid",
             headers={"Authorization": config["proxy_token"]}
         )
-        
+
         result = response.json()
         if "results" in result:
             proxies = [result for result in result["results"] if result["valid"]]
