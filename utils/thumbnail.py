@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import os
 import re
 from typing import cast
-from ffmpeg import FFmpeg, FFmpegError # pyright: ignore[reportMissingTypeStubs]
+from .ffmpeg import run_ffmpeg, FFmpegError
 import pathlib
 
 from retry import retry
@@ -87,16 +87,15 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
     # Round down time to nearest frame be consistent with browsers
     rounded_time = int(time * playback_url.fps) / playback_url.fps
 
-    ffmpeg = FFmpeg()
+    http_proxy = []
     if proxy_url is not None:
-        ffmpeg.option("http_proxy", proxy_url)
-    (
-        ffmpeg
-        .option("y")
-        .option("timelimit", "20")
-        .input(playback_url.url, ss=rounded_time)
-        .output(output_filename, vframes=1, lossless=0, pix_fmt="bgra")
-        .execute()
+        http_proxy = ["-http_proxy", proxy_url]
+    run_ffmpeg(
+        "-y",
+        *http_proxy,
+        "-ss", str(rounded_time), "-i", playback_url.url,
+        "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
+        timeout=20,
     )
 
 async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
