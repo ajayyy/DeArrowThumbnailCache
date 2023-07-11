@@ -1,4 +1,5 @@
 import json
+import re
 import requests
 from utils.config import config
 import time
@@ -36,6 +37,9 @@ def fetch_proxies() -> list[Any]:
 
     return json.loads(redis_conn.get("proxies") or "[]")
 
+def verify_proxy_url(url: str) -> bool:
+    return re.match(r"^[0-9A-Za-z\/:@_%.]+$", url) is not None
+
 
 def get_proxy_url() -> str | None:
     if config["proxy_token"] is None:
@@ -47,4 +51,8 @@ def get_proxy_url() -> str | None:
         raise ValueError("No proxies available at the moment")
     else:
         chosen_proxy = proxies[random.randint(0, len(proxies) - 1)]
-        return f'http://{chosen_proxy["username"]}:{chosen_proxy["password"]}@{chosen_proxy["proxy_address"]}:{chosen_proxy["port"]}/'
+        url = f'http://{chosen_proxy["username"]}:{chosen_proxy["password"]}@{chosen_proxy["proxy_address"]}:{chosen_proxy["port"]}/'
+        if verify_proxy_url(url):
+            return url
+        else:
+            raise ValueError(f"Proxy url is invalid {url}")
