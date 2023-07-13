@@ -12,7 +12,21 @@ max_size = config['thumbnail_storage']['max_size']
 redis_offset_allowed = config["thumbnail_storage"]["redis_offset_allowed"]
 
 def cleanup() -> None:
+    # First try clenup using redis data
+    storage_used = int(redis_conn.get(storage_used_key()) or 0)
+
+    if storage_used > max_size:
+        cleanup_internal(storage_used)
+
     (folder_size, file_count) = get_folder_size(folder_path)
+    redis_conn.set(storage_used_key(), folder_size)
+    redis_conn.set(last_storage_check_key(), int(time.time()))
+
+    if folder_size > max_size:
+        storage_saved = cleanup_internal(folder_size, file_count)
+        redis_conn.set(storage_used_key(), folder_size - storage_saved)
+
+def cleanup_internal(folder_size: int, file_count: int | None = None) -> int:
     redis_conn.set(storage_used_key(), folder_size)
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
@@ -21,7 +35,7 @@ def cleanup() -> None:
 
     storage_saved = 0
     if folder_size > target_storage_size:
-        if file_count - get_size_of_last_used() > redis_offset_allowed:
+        if file_count is not None and file_count - get_size_of_last_used() > redis_offset_allowed:
             # Need to delete extra video's files
             with os.scandir(folder_path) as it:
                 for entry in it:
@@ -38,8 +52,7 @@ def cleanup() -> None:
                 storage_saved += get_folder_size(os.path.join(folder_path, video_id))[0]
                 delete_video(video_id)
 
-
-    redis_conn.set(storage_used_key(), folder_size - storage_saved)
+    return storage_saved
 
 @retry(tries=5, delay=0.1, backoff=3)
 def check_if_cleanup_needed() -> None:
