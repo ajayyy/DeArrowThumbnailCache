@@ -136,6 +136,18 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
         "workers_count": len(workers),
     }
 
+@app.get("/api/v1/clearQueue")
+def clear_queue(auth: str, low: bool = True, high: bool = False) -> None:
+    is_authorized = compare_digest(auth, config["status_auth_password"])
+
+    if is_authorized:
+        if low:
+            queue_low.empty()
+        if high:
+            queue_high.empty()
+    else:
+        raise HTTPException(status_code=403)
+
 
 def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
     try:
