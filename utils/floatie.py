@@ -5,6 +5,9 @@ import json
 class InnertubeError(Exception):
     pass
 
+class InnertubePlayabilityError(Exception):
+    pass
+
 @dataclass
 class InnertubeDetails:
     api_key: str
@@ -70,5 +73,8 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     data = response.json()
     if data["videoDetails"]["videoId"] != video_id:
         raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
+
+    if data["playabilityStatus"]["status"] != "OK":
+        raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
 
     return data["streamingData"]["adaptiveFormats"]

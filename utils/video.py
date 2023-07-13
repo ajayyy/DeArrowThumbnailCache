@@ -34,6 +34,9 @@ def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]
     if config["try_floatie"]:
         try:
             formats = floatie.fetch_playback_urls(video_id, proxy_url)
+        except floatie.InnertubePlayabilityError:
+            # Give up early, let the client generate one since it is geoblocked
+            return []
         except Exception as e:
             errors.append(e)
 
