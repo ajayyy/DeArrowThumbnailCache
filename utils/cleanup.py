@@ -9,20 +9,21 @@ from utils.redis_handler import get_async_redis_conn, redis_conn, queue_high
 
 folder_path = config['thumbnail_storage']['path']
 max_size = config['thumbnail_storage']['max_size']
+target_storage_size = int(max_size * 0.9)
 redis_offset_allowed = config["thumbnail_storage"]["redis_offset_allowed"]
 
 def cleanup() -> None:
     # First try clenup using redis data
     storage_used = int(redis_conn.get(storage_used_key()) or 0)
 
-    if storage_used > max_size:
+    if storage_used > target_storage_size:
         cleanup_internal(storage_used)
 
     (folder_size, file_count) = get_folder_size(folder_path)
     redis_conn.set(storage_used_key(), folder_size)
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
-    if folder_size > max_size:
+    if folder_size > target_storage_size:
         storage_saved = cleanup_internal(folder_size, file_count)
         redis_conn.set(storage_used_key(), folder_size - storage_saved)
 
@@ -30,7 +31,6 @@ def cleanup_internal(folder_size: int, file_count: int | None = None) -> int:
     redis_conn.set(storage_used_key(), folder_size)
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
-    target_storage_size = int(max_size * 0.9)
     print(f"Storage used: {folder_size} bytes with {file_count} files. Targeting {target_storage_size} bytes.")
 
     storage_saved = 0
