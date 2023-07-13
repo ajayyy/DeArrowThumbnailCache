@@ -17,6 +17,7 @@ def cleanup() -> None:
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
     target_storage_size = int(max_size * 0.9)
+    print(f"Storage used: {folder_size} bytes with {file_count} files. Targeting {target_storage_size} bytes.")
 
     storage_saved = 0
     if folder_size > target_storage_size:
@@ -61,13 +62,17 @@ def check_if_cleanup_needed() -> None:
 def get_folder_size(path: str) -> Tuple[int, int]:
     total = 0
     file_count = 0
-    with os.scandir(path) as it:
-        for entry in it:
-            if entry.is_file():
-                total += entry.stat().st_size
-            elif entry.is_dir():
-                total += get_folder_size(entry.path)[0]
-            file_count += 1
+    try:
+        with os.scandir(path) as it:
+            for entry in it:
+                if entry.is_file():
+                    total += entry.stat().st_size
+                elif entry.is_dir():
+                    total += get_folder_size(entry.path)[0]
+                file_count += 1
+    except FileNotFoundError:
+        pass
+
     return (total, file_count)
 
 @retry(tries=5, delay=0.1, backoff=3)
