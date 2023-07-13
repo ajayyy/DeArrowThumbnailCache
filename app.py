@@ -85,26 +85,26 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         raise HTTPException(status_code=204, detail="Thumbnail not generated yet")
 
     if result:
-        return await handle_thumbnail_response(videoID, time, title, response)
+        try:
+            return await handle_thumbnail_response(videoID, time, title, response)
+        except Exception as e:
+            log("Server error when getting thumbnails", e)
+            raise HTTPException(status_code=204, detail="Server error")
     else:
         log("Failed to generate thumbnail")
         raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
 
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
-    try:
-        thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
-        response.headers["X-Timestamp"] = str(thumbnail.time)
-        response.headers["Cache-Control"] = "public, max-age=3600"
-        if thumbnail.title is not None:
-            try:
-                response.headers["X-Title"] = thumbnail.title.strip()
-            except UnicodeEncodeError:
-                pass
+    thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
+    response.headers["X-Timestamp"] = str(thumbnail.time)
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    if thumbnail.title is not None:
+        try:
+            response.headers["X-Title"] = thumbnail.title.strip()
+        except UnicodeEncodeError:
+            pass
 
-        return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
-    except Exception as e:
-        log("Server error when getting thumbnails", e)
-        raise HTTPException(status_code=204, detail="Server error")
+    return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
 
 @app.get("/api/v1/status")
 def get_status(auth: str | None = None) -> dict[str, Any]:
