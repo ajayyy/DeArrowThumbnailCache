@@ -28,9 +28,6 @@ def cleanup() -> None:
         redis_conn.set(storage_used_key(), folder_size - storage_saved)
 
 def cleanup_internal(folder_size: int, file_count: int | None = None) -> int:
-    redis_conn.set(storage_used_key(), folder_size)
-    redis_conn.set(last_storage_check_key(), int(time.time()))
-
     print(f"Storage used: {folder_size} bytes with {file_count} files. Targeting {target_storage_size} bytes.")
 
     storage_saved = 0
