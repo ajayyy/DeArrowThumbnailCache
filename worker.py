@@ -5,11 +5,13 @@ import uvicorn
 from rq.worker import SimpleWorker as Worker, WorkerStatus, DequeueStrategy
 from utils.redis_handler import redis_conn
 from utils.config import config
+from utils.misc import generate_worker_name
 
 listen = ["high", "default"]
-worker = Worker(listen, connection=redis_conn)
+worker = Worker(listen, connection=redis_conn, name=generate_worker_name())
 
 health_check = FastAPI()
+
 
 @health_check.get("{full_path:path}")
 def get_health_check() -> dict[str, Any]:
@@ -18,7 +20,7 @@ def get_health_check() -> dict[str, Any]:
     if worker.state == WorkerStatus.SUSPENDED \
             or (worker.state == WorkerStatus.BUSY and current_job is None):
         raise HTTPException(status_code=500, detail="Worker suspended")
-    
+
     return {
         "name": worker.name,
         "key": worker.key,
@@ -40,7 +42,8 @@ def get_health_check() -> dict[str, Any]:
         "total_working_time": worker.total_working_time,
         "total_workers": worker.count(redis_conn)
     }
-    
+
+
 if __name__ == "__main__":
     uvicorn_thread = threading.Thread(target=uvicorn.run, kwargs={
         "app": health_check,

@@ -23,7 +23,7 @@ def get_playback_url(video_id: str, proxy_url: str | None = None,
     for url in playback_urls:
         if url.height <= height:
             return url
-    
+
     raise ValueError(f"Failed to find playback URL with height <= {height}")
 
 @retry(tries=3, delay=1, backoff=2)
@@ -36,7 +36,7 @@ def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]
             formats = floatie.fetch_playback_urls(video_id, proxy_url)
         except Exception as e:
             errors.append(e)
-    
+
     if formats is None:
         # Fallback to ytdlp
         try:
@@ -47,14 +47,14 @@ def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]
     if formats is None:
         raise ValueError(f"Failed to fetch playback URLs: {video_id} Errors: {','.join([str(error) for error in errors])}") \
             from errors[0]
-    
+
     if any(format_has_av1(format) for format in formats):
         # Filter for only av1
         formats = [format for format in formats if format_has_av1(format)]
 
-    formatted_urls = [PlaybackUrl(url["url"], url["width"], url["height"], url["fps"]) 
+    formatted_urls = [PlaybackUrl(url["url"], url["width"], url["height"], url["fps"])
         for url in cast(list[dict[str, Any]], formats) if "height" in url and url["height"] is not None]
-    
+
     if formatted_urls[-1].height > 720:
         # Order is the wrong way
         formatted_urls.reverse()
