@@ -33,7 +33,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
             raise ValueError(f"Invalid video ID: {video_id}")
         if type(time) is not float:
             raise ValueError(f"Invalid time: {time}")
-        
+
         if update_redis:
             try:
                 asyncio.get_event_loop().run_until_complete(update_last_used(video_id))
@@ -64,7 +64,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         publish_job_status(video_id, time, "false")
         raise e
 
-@retry(FFmpegError, tries=2, delay=1) 
+@retry(FFmpegError, tries=2, delay=1)
 def generate_and_store_thumbnail(video_id: str, time: float) -> None:
     proxy_url = get_proxy_url() or config["proxy_url"]
     playback_url = get_playback_url(video_id, proxy_url)
@@ -110,7 +110,7 @@ async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     best_time = await get_best_time(video_id)
 
     selected_file: str | None = f"{best_time.decode()}{image_format}" if best_time is not None else None
-    
+
     # Fallback to latest image
     if selected_file is None or selected_file not in files:
         selected_file = None
@@ -133,7 +133,7 @@ async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
         # Remove file extension
         time = float(re.sub(r"\.\S{3,4}$", "", selected_file))
         return await get_thumbnail_from_files(video_id, time)
-        
+
     raise FileNotFoundError(f"Failed to find thumbnail for {video_id}")
 
 async def get_thumbnail_from_files(video_id: str, time: float, title: str | None = None) -> Thumbnail:
@@ -163,13 +163,13 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
                 return Thumbnail(image_data, time, metadata_file.read())
         else:
             return Thumbnail(image_data, time)
-    
+
 def get_file_paths(video_id: str, time: float) -> tuple[str, str, str]:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
     if type(time) is not float:
         raise ValueError(f"Invalid time: {time}")
-    
+
 
     output_folder = get_folder_path(video_id)
     output_filename = f"{output_folder}/{time}{image_format}"
@@ -185,7 +185,7 @@ def get_folder_path(video_id: str) -> str:
 
 def get_job_id(video_id: str, time: float) -> str:
     return f"{video_id}-{time}"
-    
+
 def get_best_time_key(video_id: str) -> str:
     return f"best-{video_id}"
 

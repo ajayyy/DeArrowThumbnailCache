@@ -30,7 +30,7 @@ def cleanup() -> None:
                         shutil.rmtree(entry.path)
                     if folder_size - storage_saved <= target_storage_size:
                         break
-            
+
         if folder_size - storage_saved > target_storage_size:
             # Now use redis to find the best options to delete
             while folder_size - storage_saved > target_storage_size:
@@ -38,7 +38,7 @@ def cleanup() -> None:
                 storage_saved += get_folder_size(os.path.join(folder_path, video_id))[0]
                 delete_video(video_id)
 
-    
+
     redis_conn.set(storage_used_key(), folder_size - storage_saved)
 
 @retry(tries=5, delay=0.1, backoff=3)
@@ -51,8 +51,8 @@ def check_if_cleanup_needed() -> None:
         job_id = get_cleanup_job_id()
         existing_job = queue_high.fetch_job(job_id)
 
-        if existing_job is None or (existing_job.is_failed or existing_job.is_finished 
-                                    or existing_job.is_canceled or existing_job.is_deferred 
+        if existing_job is None or (existing_job.is_failed or existing_job.is_finished
+                                    or existing_job.is_canceled or existing_job.is_deferred
                                     or existing_job.is_stopped):
             if existing_job is not None:
                 existing_job.delete()
@@ -77,7 +77,7 @@ def get_folder_size(path: str) -> Tuple[int, int]:
 
 @retry(tries=5, delay=0.1, backoff=3)
 def get_oldest_video_id() -> str:
-    return redis_conn.zrange(last_used_key(), 0, 0)[0].decode("utf-8") 
+    return redis_conn.zrange(last_used_key(), 0, 0)[0].decode("utf-8")
 
 @retry(tries=5, delay=0.1, backoff=3)
 def get_last_used_rank(video_id: str) -> int | None:

@@ -82,7 +82,7 @@ async def test_cleanup():
 
         assert os.path.exists(os.path.join("test-cache", new_video_id))
         assert not os.path.exists(os.path.join("test-cache", old_video_id))
-    
+
 async def load_and_verify_request(video_id: str, time: float, title: str | None = None, send_title: bool = False, generate_now: bool = False) -> None:
     test_response = Response()
     test_result = await get_thumbnail(test_response, video_id, time, generate_now, title if send_title else None)
@@ -93,7 +93,7 @@ async def load_and_verify_request(video_id: str, time: float, title: str | None 
     if title is not None and not send_title:
         assert test_result.headers["X-Title"] == title
 
-    
+
 async def load_and_verify_thumbnail(video_id: str, time: float, title: str | None = None) -> None:
     generate_thumbnail(video_id, time, title, False)
 
