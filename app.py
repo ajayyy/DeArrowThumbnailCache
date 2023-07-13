@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -99,10 +101,7 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
     response.headers["X-Timestamp"] = str(thumbnail.time)
     response.headers["Cache-Control"] = "public, max-age=3600"
     if thumbnail.title is not None:
-        try:
-            response.headers["X-Title"] = thumbnail.title.strip()
-        except UnicodeEncodeError:
-            pass
+        response.headers["X-Title"] = json.dumps(thumbnail.title.strip(), ensure_ascii=True)
 
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
 

@@ -1,4 +1,5 @@
 from multiprocessing import Process
+import json
 import os
 import shutil
 import time
@@ -91,7 +92,7 @@ async def load_and_verify_request(video_id: str, time: float, title: str | None 
     assert test_result.headers["X-Timestamp"] == str(time)
 
     if title is not None and not send_title:
-        assert test_result.headers["X-Title"] == title
+        assert test_result.headers["X-Title"] == json.dumps(title, ensure_ascii=True)
 
 
 async def load_and_verify_thumbnail(video_id: str, time: float, title: str | None = None) -> None:
