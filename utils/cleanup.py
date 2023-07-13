@@ -85,7 +85,10 @@ def get_size_of_last_used() -> int:
 @retry(tries=5, delay=0.1, backoff=3)
 def delete_video(video_id: str) -> None:
     redis_conn.zrem(last_used_key(), last_used_element_key(video_id))
-    shutil.rmtree(os.path.join(folder_path, video_id))
+    try:
+        shutil.rmtree(os.path.join(folder_path, video_id))
+    except FileNotFoundError:
+        print(f"Could not find folder for video {video_id}")
 
 @retry(tries=5, delay=0.1, backoff=3)
 async def update_last_used(video_id: str) -> None:
