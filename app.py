@@ -138,26 +138,29 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
 
 
 def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
-    current_job = worker.get_current_job()
-    return {
-        "name": worker.name,
-        "state": worker.state,
-        "current_job": {
-            "id": current_job.id,
-            "description": current_job.description,
-            "origin": current_job.origin,
-            "created_at": current_job.created_at,
-            "enqueued_at": current_job.enqueued_at,
-            "started_at": current_job.started_at,
-            "ended_at": current_job.ended_at,
-            "exc_info": current_job.exc_info,
-            "meta": current_job.meta,
-        } if current_job is not None and is_authorized else None,
-        "birth_date": worker.birth_date,
-        "successful_job_count": worker.successful_job_count,
-        "failed_job_count": worker.failed_job_count,
-        "total_working_time": worker.total_working_time,
-    }
+    try:
+        current_job = worker.get_current_job()
+        return {
+            "name": worker.name,
+            "state": worker.state,
+            "current_job": {
+                "id": current_job.id,
+                "description": current_job.description,
+                "origin": current_job.origin,
+                "created_at": current_job.created_at,
+                "enqueued_at": current_job.enqueued_at,
+                "started_at": current_job.started_at,
+                "ended_at": current_job.ended_at,
+                "exc_info": current_job.exc_info,
+                "meta": current_job.meta,
+            } if current_job is not None and is_authorized else None,
+            "birth_date": worker.birth_date,
+            "successful_job_count": worker.successful_job_count,
+            "failed_job_count": worker.failed_job_count,
+            "total_working_time": worker.total_working_time,
+        }
+    except Exception:
+        return {}
 
 if __name__ == "__main__":
     import uvicorn
