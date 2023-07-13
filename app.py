@@ -10,6 +10,7 @@ from rq.worker import Worker
 from utils.test_utils import in_test
 
 from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
+from utils.video import valid_video_id
 
 app = FastAPI()
 app.add_middleware(
@@ -30,7 +31,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
                         generateNow: bool = False, title: str | None = None,
                         officialTime: bool = False) -> Response:
     if type(videoID) is not str or (type(time) is not float and time is not None) \
-            or type(generateNow) is not bool:
+            or type(generateNow) is not bool or not valid_video_id(videoID):
         raise HTTPException(status_code=400, detail="Invalid parameters")
 
     if officialTime and time is not None:
@@ -90,16 +91,20 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
 
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
-    thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
-    response.headers["X-Timestamp"] = str(thumbnail.time)
-    response.headers["Cache-Control"] = "public, max-age=3600"
-    if thumbnail.title is not None:
-        try:
-            response.headers["X-Title"] = thumbnail.title.strip()
-        except UnicodeEncodeError:
-            pass
+    try:
+        thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
+        response.headers["X-Timestamp"] = str(thumbnail.time)
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        if thumbnail.title is not None:
+            try:
+                response.headers["X-Title"] = thumbnail.title.strip()
+            except UnicodeEncodeError:
+                pass
 
-    return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
+        return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
+    except Exception as e:
+        log("Server error when getting thumbnails", e)
+        raise HTTPException(status_code=204, detail="Server error")
 
 @app.get("/api/v1/status")
 def get_status(auth: str | None = None) -> dict[str, Any]:
