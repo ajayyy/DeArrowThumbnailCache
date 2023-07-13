@@ -95,7 +95,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         *http_proxy,
         "-ss", str(rounded_time), "-i", playback_url.url,
         "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
-        "-timeout", "20",
+        "-timelimit", "20",
         timeout=20,
     )
 
