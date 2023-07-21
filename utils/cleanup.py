@@ -9,7 +9,7 @@ from utils.redis_handler import get_async_redis_conn, redis_conn, queue_high
 
 folder_path = config['thumbnail_storage']['path']
 max_size = config['thumbnail_storage']['max_size']
-target_storage_size = int(max_size * 0.9)
+target_storage_size = int(max_size * config['thumbnail_storage']['cleanup_multiplier'])
 redis_offset_allowed = config["thumbnail_storage"]["redis_offset_allowed"]
 
 def cleanup() -> None:

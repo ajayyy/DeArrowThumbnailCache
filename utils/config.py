@@ -12,6 +12,7 @@ class ServerSettings(TypedDict):
 class ThumbnailStorage(TypedDict):
     path: str
     max_size: int
+    cleanup_multiplier: float
     redis_offset_allowed: int
     max_before_async_generation: int
 
