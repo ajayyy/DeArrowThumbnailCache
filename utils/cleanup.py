@@ -25,7 +25,7 @@ def cleanup() -> None:
 
     diff = after_storage_used - before_storage_used
 
-    redis_conn.set(storage_used_key(), folder_size + (diff if diff > 0 else 0)))
+    redis_conn.set(storage_used_key(), folder_size + (diff if diff > 0 else 0))
     redis_conn.set(last_storage_check_key(), int(time.time()))
 
     if folder_size > target_storage_size:
