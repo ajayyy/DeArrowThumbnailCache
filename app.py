@@ -67,7 +67,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             # New queue is low, old queue is high, prefer old one
             job = other_queue_job
 
-    if job is None or job.is_finished:
+    if job is None or job.is_finished or job.is_failed:
         # Start the job if it is not already started
         # TODO: Remove the ttl when proper priority is implemented
         job = queue.enqueue(generate_thumbnail,
