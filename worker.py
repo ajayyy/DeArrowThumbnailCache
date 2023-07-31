@@ -54,4 +54,4 @@ if __name__ == "__main__":
     uvicorn_thread.daemon = True
     uvicorn_thread.start()
 
-    worker.work(dequeue_strategy=DequeueStrategy.ROUND_ROBIN)
+    worker.work(dequeue_strategy=DequeueStrategy.DEFAULT)
