@@ -18,6 +18,9 @@ from utils.logger import log, log_error
 image_format: str = ".webp"
 metadata_format: str = ".txt"
 
+class ThumbnailGenerationError(Exception):
+    pass
+
 @dataclass
 class Thumbnail:
     image: bytes
@@ -64,20 +67,23 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         publish_job_status(video_id, time, "false")
         raise e
 
-@retry(FFmpegError, tries=2, delay=1)
+@retry(ThumbnailGenerationError, tries=2, delay=1)
 def generate_and_store_thumbnail(video_id: str, time: float) -> None:
     proxy_url = get_proxy_url() or config["proxy_url"]
     playback_url = get_playback_url(video_id, proxy_url)
 
     try:
-        generate_with_ffmpeg(video_id, time, playback_url)
-    except FFmpegError:
-        # the main proxy url used as a fallback rotates randomly, so is not consistent
-        if proxy_url is not None and proxy_url != config["proxy_url"]:
-            # try again through proxy
-            generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
-        else:
-            raise
+        try:
+            generate_with_ffmpeg(video_id, time, playback_url)
+        except FFmpegError:
+            # the main proxy url used as a fallback rotates randomly, so is not consistent
+            if proxy_url is not None and proxy_url != config["proxy_url"]:
+                # try again through proxy
+                generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
+            else:
+                raise
+    except FFmpegError as e:
+        raise ThumbnailGenerationError(f"Failed to generate thumbnail for {video_id} at {time}: {e}")
 
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             proxy_url: str | None = None) -> None:
