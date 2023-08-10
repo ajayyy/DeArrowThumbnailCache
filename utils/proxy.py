@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 import re
 import requests
 from utils.config import config
@@ -41,6 +42,11 @@ def verify_proxy_url(url: str) -> bool:
     return re.match(r"^[0-9A-Za-z\/:@_%.]+$", url) is not None
 
 
+@dataclass
+class ProxyInfo:
+    url: str
+    country_code: str
+
 def get_proxy_url() -> str | None:
     if config["proxy_token"] is None:
         return None
@@ -53,6 +59,6 @@ def get_proxy_url() -> str | None:
         chosen_proxy = proxies[random.randint(0, len(proxies) - 1)]
         url = f'http://{chosen_proxy["username"]}:{chosen_proxy["password"]}@{chosen_proxy["proxy_address"]}:{chosen_proxy["port"]}/'
         if verify_proxy_url(url):
-            return url
+            return ProxyInfo(url, chosen_proxy["country_code"])
         else:
             raise ValueError(f"Proxy url is invalid {url}")
