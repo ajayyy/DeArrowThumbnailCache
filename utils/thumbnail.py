@@ -84,7 +84,8 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
             else:
                 raise
     except FFmpegError as e:
-        raise ThumbnailGenerationError(f"Failed to generate thumbnail for {video_id} at {time} with proxy {proxy.country_code if proxy is not None else ''}: {e}")
+        raise ThumbnailGenerationError \
+            (f"Failed to generate thumbnail for {video_id} at {time} with proxy {proxy.country_code if proxy is not None else ''}: {e}")
 
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             proxy_url: str | None = None) -> None:
