@@ -29,7 +29,8 @@ def root() -> RedirectResponse:
 @app.get("/api/v1/getThumbnail")
 async def get_thumbnail(response: Response, videoID: str, time: float | None = None,
                         generateNow: bool = False, title: str | None = None,
-                        officialTime: bool = False) -> Response:
+                        officialTime: bool = False,
+                        redirectUrl: str | None = None) -> Response:
     if type(videoID) is not str or (type(time) is not float and time is not None) \
             or type(generateNow) is not bool or not valid_video_id(videoID):
         raise HTTPException(status_code=400, detail="Invalid parameters")
@@ -44,7 +45,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
 
     if time is None:
         # If we got here with a None time, then there is no thumbnail to pull from
-        raise HTTPException(status_code=204, detail="Thumbnail not cached")
+        return thumbnail_response_error(redirectUrl, "Thumbnail not cached")
 
 
     job_id = get_job_id(videoID, time)
@@ -80,20 +81,21 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
             result = (await wait_for_message(job_id)) == "true"
         except TimeoutError:
             log("Failed to generate thumbnail due to timeout")
-            raise HTTPException(status_code=204, detail="Failed to generate thumbnail due to timeout")
+            return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to timeout")
     else:
         log("Thumbnail not generated yet", job.get_position())
-        raise HTTPException(status_code=204, detail="Thumbnail not generated yet")
+        return thumbnail_response_error(redirectUrl, "Thumbnail not generated yet")
 
     if result:
         try:
             return await handle_thumbnail_response(videoID, time, title, response)
         except Exception as e:
             log("Server error when getting thumbnails", e)
-            raise HTTPException(status_code=204, detail="Server error")
+            return thumbnail_response_error(redirectUrl, "Server error")
     else:
         log("Failed to generate thumbnail")
-        raise HTTPException(status_code=204, detail="Failed to generate thumbnail")
+        return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail")
+
 
 async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
     thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
@@ -106,6 +108,12 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
             pass
 
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
+
+def thumbnail_response_error(redirect_url: str, text: str) -> Response:
+    if redirect_url is not None and redirect_url.startswith("https://i.ytimg.com"):
+        return RedirectResponse(redirect_url)
+    else:
+        raise HTTPException(status_code=400, detail=text)
 
 @app.get("/api/v1/status")
 def get_status(auth: str | None = None) -> dict[str, Any]:
