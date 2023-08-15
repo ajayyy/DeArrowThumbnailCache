@@ -73,7 +73,10 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
     url = f"https://www.youtube.com/watch?v={video_id}"
     with yt_dlp.YoutubeDL({
         "proxy": proxy_url,
+        "retries": 0,
+        "fragment_retries": 0,
         "extractor_retries": 0,
+        "file_access_retries": 0,
         "socket_timeout": 15
     }) as ydl:
         info: Any = ydl.extract_info(url, download=False)
