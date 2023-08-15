@@ -17,7 +17,7 @@ class InnertubeDetails:
 
 innertube_details = InnertubeDetails(
     api_key="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
-    client_version="17.31.35",
+    client_version="18.20.38",
     client_name="3",
     android_version="12"
 )
@@ -40,7 +40,6 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     payload = json.dumps({
         "context": context,
         "videoId": video_id,
-        "params": "8AEB",
         "playbackContext": {
             "contentPlaybackContext": {
                 "html5Preference": "HTML5_PREF_WANTS"
