@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import re
 from typing import Any, cast
-from retry import retry
 import yt_dlp # pyright: ignore[reportMissingTypeStubs]
 from utils.config import config
 import utils.floatie as floatie
@@ -26,7 +25,6 @@ def get_playback_url(video_id: str, proxy_url: str | None = None,
 
     raise ValueError(f"Failed to find playback URL with height <= {height}")
 
-@retry(tries=3, delay=1, backoff=2)
 def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]:
     formats: list[dict[str, str | int]] | None = None
     errors: list[Exception] = []
