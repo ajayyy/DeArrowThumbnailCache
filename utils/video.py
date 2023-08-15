@@ -40,7 +40,7 @@ def get_playback_urls(video_id: str, proxy_url: str | None) -> list[PlaybackUrl]
         except Exception as e:
             errors.append(e)
 
-    if formats is None:
+    if formats is None and config["try_ytdlp"]:
         # Fallback to ytdlp
         try:
             formats = fetch_playback_urls_from_ytdlp(video_id, proxy_url)

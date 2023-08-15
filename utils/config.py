@@ -27,6 +27,7 @@ class Config(TypedDict):
     default_max_height: int
     status_auth_password: str
     try_floatie: bool
+    try_ytdlp: bool
     proxy_url: str | None
     proxy_token: str | None
     debug: bool

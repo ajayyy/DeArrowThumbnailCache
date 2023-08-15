@@ -15,4 +15,5 @@ redis:
 default_max_height: 720
 status_auth_password: password
 try_floatie: true
+try_ytdlp: true
 debug: true
