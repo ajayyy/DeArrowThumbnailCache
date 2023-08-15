@@ -65,7 +65,7 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
         "https": proxy_url
     } if proxy_url is not None else None
 
-    response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies)
+    response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies, timeout=10)
     if not response.ok:
         raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 
