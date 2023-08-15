@@ -1,5 +1,5 @@
 FROM python:3.11-alpine AS builder
-RUN apk add --no-cache ffmpeg gcc musl-dev libffi-dev
+RUN apk add --no-cache ffmpeg gcc musl-dev libffi-dev git
 COPY requirements.txt /
 RUN mkdir /wheels
 WORKDIR /wheels
