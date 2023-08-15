@@ -75,11 +75,14 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
 
     try:
         try:
+            print(f"Generating image for {video_id}, {time_module.time()}")
+
             generate_with_ffmpeg(video_id, time, playback_url)
         except FFmpegError:
             # the main proxy url used as a fallback rotates randomly, so is not consistent
             if proxy is not None:
                 # try again through proxy
+                print(f"Trying to generate again through the proxy {time_module.time()}")
                 generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
             else:
                 raise
