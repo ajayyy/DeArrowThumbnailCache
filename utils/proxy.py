@@ -47,7 +47,7 @@ class ProxyInfo:
     url: str
     country_code: str
 
-def get_proxy_url() -> str | None:
+def get_proxy_url() -> ProxyInfo | None:
     if config["proxy_token"] is None:
         return None
 
