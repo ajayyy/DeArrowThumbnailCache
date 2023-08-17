@@ -109,7 +109,7 @@ async def handle_thumbnail_response(video_id: str, time: float | None, title: st
 
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
 
-def thumbnail_response_error(redirect_url: str, text: str) -> Response:
+def thumbnail_response_error(redirect_url: str | None, text: str) -> Response:
     if redirect_url is not None and redirect_url.startswith("https://i.ytimg.com"):
         return RedirectResponse(redirect_url)
     else:
