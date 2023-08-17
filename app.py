@@ -75,7 +75,7 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
                         args=(videoID, time, title, not in_test()), job_id=job_id, job_timeout=30, failure_ttl=500, ttl=60)
 
     result: bool = False
-    if generateNow or ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
+    if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
             and len(queue_high) < config["thumbnail_storage"]["max_before_async_generation"]):
         try:
             result = (await wait_for_message(job_id)) == "true"
