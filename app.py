@@ -155,7 +155,7 @@ def clear_queue(auth: str, low: bool = True, high: bool = False) -> None:
         if high:
             queue_high.empty()
     else:
-        raise HTTPException(status_code=403)
+        raise HTTPException(status_code=204)
 
 
 def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
