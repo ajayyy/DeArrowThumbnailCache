@@ -85,7 +85,7 @@ async def get_thumbnail(response: Response, request: Request,
 
     result: bool = False
     if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
-            and len(queue_high) < config["thumbnail_storage"]["max_before_async_generation"]):
+            and (generateNow or len(queue_high) < config["thumbnail_storage"]["max_before_async_generation"])):
         try:
             result = (await wait_for_message(job_id)) == "true"
         except TimeoutError:
