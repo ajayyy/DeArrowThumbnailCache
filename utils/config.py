@@ -30,6 +30,7 @@ class Config(TypedDict):
     try_ytdlp: bool
     proxy_url: str | None
     proxy_token: str | None
+    front_auth: str | None
     debug: bool
 
 

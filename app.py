@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from utils.config import config
@@ -27,7 +27,8 @@ def root() -> RedirectResponse:
     return RedirectResponse("https://github.com/ajayyy/DeArrowThumbnailCache")
 
 @app.get("/api/v1/getThumbnail")
-async def get_thumbnail(response: Response, videoID: str, time: float | None = None,
+async def get_thumbnail(response: Response, request: Request,
+                        videoID: str, time: float | None = None,
                         generateNow: bool = False, title: str | None = None,
                         officialTime: bool = False,
                         redirectUrl: str | None = None) -> Response:
@@ -72,7 +73,12 @@ async def get_thumbnail(response: Response, videoID: str, time: float | None = N
         # Start the job if it is not already started
         # TODO: Remove the ttl when proper priority is implemented
         job = queue.enqueue(generate_thumbnail,
-                        args=(videoID, time, title, not in_test()), job_id=job_id, job_timeout=30, failure_ttl=500, ttl=60)
+                        args=(videoID, time, title, not in_test()),
+                        job_id=job_id,
+                        job_timeout=30,
+                        failure_ttl=500,
+                        ttl=60,
+                        at_front=config["front_auth"] is not None and request.headers.get("Authorization") == config["front_auth"])
 
     result: bool = False
     if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
