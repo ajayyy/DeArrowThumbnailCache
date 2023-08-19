@@ -29,7 +29,8 @@ def root() -> RedirectResponse:
 @app.get("/api/v1/getThumbnail")
 async def get_thumbnail(response: Response, request: Request,
                         videoID: str, time: float | None = None,
-                        generateNow: bool = False, title: str | None = None,
+                        generateNow: bool = False,
+                        title: str | None = None,
                         officialTime: bool = False,
                         redirectUrl: str | None = None) -> Response:
     if type(videoID) is not str or (type(time) is not float and time is not None) \
@@ -78,7 +79,9 @@ async def get_thumbnail(response: Response, request: Request,
                         job_timeout=30,
                         failure_ttl=500,
                         ttl=60,
-                        at_front=config["front_auth"] is not None and request.headers.get("Authorization") == config["front_auth"])
+                        at_front="front_auth" in config\
+                            and config["front_auth"] is not None\
+                            and request.headers.get("authorization") == config["front_auth"])
 
     result: bool = False
     if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]

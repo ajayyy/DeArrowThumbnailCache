@@ -85,7 +85,7 @@ async def test_cleanup():
 
 async def load_and_verify_request(video_id: str, time: float, title: str | None = None, send_title: bool = False, generate_now: bool = False) -> None:
     test_response = Response()
-    test_result = await get_thumbnail(test_response, video_id, time, generate_now, title if send_title else None)
+    test_result = await get_thumbnail(test_response, None, video_id, time, generate_now, title if send_title else None) # type: ignore
     assert test_result.status_code == 200
     assert test_result.body != b""
     assert test_result.headers["X-Timestamp"] == str(time)
