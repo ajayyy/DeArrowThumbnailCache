@@ -69,18 +69,22 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
 
 @retry(ThumbnailGenerationError, tries=2, delay=1)
 def generate_and_store_thumbnail(video_id: str, time: float) -> None:
+    print("playback url start", time_module.time())
+
     proxy = get_proxy_url()
     proxy_url = proxy.url if proxy is not None else config["proxy_url"]
     playback_url = get_playback_url(video_id, proxy_url)
+
+    print("playback url done", time_module.time())
 
     try:
         try:
             print(f"Generating image for {video_id}, {time_module.time()}")
 
             generate_with_ffmpeg(video_id, time, playback_url)
+            print("generated", time_module.time())
         except FFmpegError:
-            # the main proxy url used as a fallback rotates randomly, so is not consistent
-            if proxy is not None:
+            if proxy_url is not None:
                 # try again through proxy
                 print(f"Trying to generate again through the proxy {time_module.time()}")
                 generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
