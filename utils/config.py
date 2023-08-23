@@ -28,6 +28,7 @@ class Config(TypedDict):
     status_auth_password: str
     try_floatie: bool
     try_ytdlp: bool
+    skip_local_ffmpeg: bool
     proxy_url: str | None
     proxy_token: str | None
     front_auth: str | None

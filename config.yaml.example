@@ -13,6 +13,7 @@ redis:
   port: 32774
 default_max_height: 720
 status_auth_password: password
+skip_local_ffmpeg: false
 try_floatie: true
 try_ytdlp: true
 debug: false
