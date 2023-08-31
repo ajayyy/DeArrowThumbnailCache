@@ -40,6 +40,7 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     payload = json.dumps({
         "context": context,
         "videoId": video_id,
+        "params": "CgIQBg",
         "playbackContext": {
             "contentPlaybackContext": {
                 "html5Preference": "HTML5_PREF_WANTS"
