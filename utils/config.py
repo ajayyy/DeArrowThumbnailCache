@@ -20,6 +20,10 @@ class RedisConfig(TypedDict):
     host: str
     port: int
 
+class ProxyInfoConfig(TypedDict):
+    url: str
+    country_code: str | None
+
 class Config(TypedDict):
     server: ServerSettings
     thumbnail_storage: ThumbnailStorage
@@ -30,6 +34,7 @@ class Config(TypedDict):
     try_ytdlp: bool
     skip_local_ffmpeg: bool
     proxy_url: str | None
+    proxy_urls: list[ProxyInfoConfig] | None
     proxy_token: str | None
     front_auth: str | None
     debug: bool

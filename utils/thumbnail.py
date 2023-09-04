@@ -72,7 +72,7 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
     print("playback url start", time_module.time())
 
     proxy = get_proxy_url()
-    proxy_url = proxy.url if proxy is not None else config["proxy_url"]
+    proxy_url = proxy.url if proxy is not None else None
     playback_url = get_playback_url(video_id, proxy_url)
 
     print("playback url done", time_module.time())

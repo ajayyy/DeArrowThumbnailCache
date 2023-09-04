@@ -45,11 +45,17 @@ def verify_proxy_url(url: str) -> bool:
 @dataclass
 class ProxyInfo:
     url: str
-    country_code: str
+    country_code: str | None
 
 def get_proxy_url() -> ProxyInfo | None:
     if config["proxy_token"] is None:
-        return None
+        if config["proxy_urls"] is not None and len(config["proxy_urls"]) > 0:
+            chosen_proxy = random.choice(config["proxy_urls"])
+            return ProxyInfo(chosen_proxy["url"], chosen_proxy["country_code"])
+        elif config["proxy_url"] is not None:
+            return ProxyInfo(config["proxy_url"], None)
+        else:
+            return None
 
     proxies = fetch_proxies()
 
