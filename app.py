@@ -70,7 +70,7 @@ async def get_thumbnail(response: Response, request: Request,
             # New queue is low, old queue is high, prefer old one
             job = other_queue_job
 
-    if job is None or job.is_finished or job.is_failed:
+    if job is None or job.is_finished:
         # Start the job if it is not already started
         # TODO: Remove the ttl when proper priority is implemented
         job = queue.enqueue(generate_thumbnail,
@@ -82,6 +82,9 @@ async def get_thumbnail(response: Response, request: Request,
                         at_front="front_auth" in config\
                             and config["front_auth"] is not None\
                             and request.headers.get("authorization") == config["front_auth"])
+
+    if job.is_failed:
+        return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail")
 
     result: bool = False
     if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
