@@ -6,6 +6,7 @@ from utils.config import config
 from utils.redis_handler import wait_for_message, queue_high, queue_low, redis_conn
 from utils.logger import log
 from typing import Any
+import time
 from hmac import compare_digest
 from rq.worker import Worker
 from utils.test_utils import in_test
@@ -212,6 +213,86 @@ def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
         }
     except Exception:
         return {}
+
+@app.get("/metrics", response_class=Response)
+def get_metrics() -> str:
+    workers = Worker.all(connection=redis_conn)
+    current_time = time.time()
+    queues = {"high": queue_high, "low": queue_low}
+    queue_gauges = {
+        "queue_length": lambda q: len(q),
+        "queue_scheduled": lambda q: q.scheduled_job_registry.count,
+        "queue_finished": lambda q: q.finished_job_registry.count,
+        "queue_failed": lambda q: q.failed_job_registry.count,
+        "queue_started": lambda q: q.started_job_registry.count,
+        "queue_deferred": lambda q: q.deferred_job_registry.count,
+        "queue_cancelled": lambda q: q.canceled_job_registry.count,
+    }
+    worker_gauges = {
+        "current_time": lambda _: current_time,
+        "worker_birth_date": lambda w: w.birth_date.timestamp(),
+        "worker_busy": lambda w: int(w.get_state() == "busy"),
+        "worker_successful_job_count": lambda w: w.successful_job_count,
+        "worker_failed_job_count": lambda w: w.failed_job_count,
+        "worker_working_time": lambda w: w.total_working_time,
+    }
+
+    result = [
+        "# HELP dearrow_workers Current amount of connected workers",
+        "# TYPE dearrow_workers gauge",
+        f"dearrow_workers {len(workers)}",
+
+        "# HELP dearrow_queue_length Current length of the queues",
+        "# TYPE dearrow_queue_length gauge",
+
+        "# HELP dearrow_queue_scheduled Current amount of scheduled jobs from the queue",
+        "# TYPE dearrow_queue_scheduled gauge",
+
+        "# HELP dearrow_queue_finished Current amount of finished jobs from the queue",
+        "# TYPE dearrow_queue_finished gauge",
+
+        "# HELP dearrow_queue_failed Current amount of failed jobs from the queue",
+        "# TYPE dearrow_queue_failed gauge",
+
+        "# HELP dearrow_queue_started Current amount of started jobs from the queue",
+        "# TYPE dearrow_queue_started gauge",
+
+        "# HELP dearrow_queue_deferred Current amount of deferred jobs from the queue",
+        "# TYPE dearrow_queue_deferred gauge",
+
+        "# HELP dearrow_queue_cancelled Current amount of cancelled jobs from the queue",
+        "# TYPE dearrow_queue_cancelled gauge",
+        *[
+            f'dearrow_{g_name}{{queue="{q_name}"}} {func(queue)}'
+            for q_name, queue in queues.items()
+            for g_name, func in queue_gauges.items()
+        ],
+
+        "# HELP dearrow_current_time Current unix time",
+        "# TYPE dearrow_current_time gauge",
+
+        "# HELP dearrow_worker_birth_date Unix timestamp at which this worker connected",
+        "# TYPE dearrow_worker_birth_date gauge",
+
+        "# HELP dearrow_worker_busy Is this worker busy?",
+        "# TYPE dearrow_worker_busy gauge",
+
+        "# HELP dearrow_worker_successful_job_count Number of jobs this worker has successfully completed",
+        "# TYPE dearrow_worker_successful_job_count counter",
+
+        "# HELP dearrow_worker_failed_job_count Number of jobs this worker failed to complete",
+        "# TYPE dearrow_worker_failed_job_count counter",
+
+        "# HELP dearrow_worker_working_time Number of seconds this worker has spent working",
+        "# TYPE dearrow_worker_working_time counter",
+        *[
+            f'dearrow_{g_name}{{worker_name="{w.name}"}} {func(w)}'
+            for w in workers
+            for g_name, func in worker_gauges.items()
+        ],
+    ]
+
+    return "\n".join(result)
 
 if __name__ == "__main__":
     import uvicorn
