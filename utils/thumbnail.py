@@ -80,8 +80,8 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
     try:
         try:
             proxy_to_use = proxy_url if config["skip_local_ffmpeg"] else None
-            print(f"Generating image for {video_id}, {time_module.time()}\
-                    {'' if proxy_to_use is None or proxy is None else f' through proxy {proxy.country_code}'}")
+            print(f"Generating image for {video_id}, {time_module.time()}"
+                    f"{'' if proxy_to_use is None or proxy is None else f' through proxy {proxy.country_code}'}")
 
             generate_with_ffmpeg(video_id, time, playback_url, )
             print("generated", time_module.time())
