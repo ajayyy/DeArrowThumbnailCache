@@ -86,9 +86,9 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
             generate_with_ffmpeg(video_id, time, playback_url, proxy_to_use)
             print("generated", time_module.time())
         except FFmpegError:
-            if proxy_url is not None:
+            if proxy_url is not None and proxy is not None:
                 # try again through proxy
-                print(f"Trying to generate again through the proxy {time_module.time()}")
+                print(f"Trying to generate again through the proxy {proxy.country_code} {time_module.time()}")
                 generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
             else:
                 raise
