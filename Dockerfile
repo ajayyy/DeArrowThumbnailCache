@@ -1,4 +1,5 @@
-FROM python:3.11-alpine AS builder
+# 11.4 due to regression https://github.com/python/cpython/issues/109538
+FROM python:3.11.4-alpine AS builder
 RUN apk add --no-cache ffmpeg gcc musl-dev libffi-dev git
 COPY requirements.txt /
 RUN mkdir /wheels
