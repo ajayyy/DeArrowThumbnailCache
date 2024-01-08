@@ -39,4 +39,4 @@ typing_extensions==4.5.0
 urllib3==2.0.2
 uvicorn==0.22.0
 websockets==11.0.3
-git+https://github.com/yt-dlp/yt-dlp@876b70c8edf4c0147f180bd981fbc4d625cbfb9c
+git+https://github.com/yt-dlp/yt-dlp@b6951271ac014761c9c317b9cecd5e8e139cfa7c
