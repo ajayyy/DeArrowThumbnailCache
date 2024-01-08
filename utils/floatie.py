@@ -8,6 +8,9 @@ class InnertubeError(Exception):
 class InnertubePlayabilityError(Exception):
     pass
 
+class InnertubeLoginRequiredError(Exception):
+    pass
+
 @dataclass
 class InnertubeDetails:
     api_key: str
@@ -74,7 +77,11 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     if data["videoDetails"]["videoId"] != video_id:
         raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
 
-    if data["playabilityStatus"]["status"] != "OK":
-        raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
+    playability_status = data["playabilityStatus"]["status"]
+    if playability_status != "OK":
+        if playability_status == "LOGIN_REQUIRED":
+            raise InnertubeLoginRequiredError("Login required")
+        else:
+            raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
 
     return data["streamingData"]["adaptiveFormats"]
