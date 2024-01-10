@@ -58,7 +58,7 @@ async def test_thumbnail_with_title_generate_now():
 
     thread.kill()
 
-def fake_folder_size(path: str) -> tuple[int, int]:
+def fake_folder_size(path: str, _ = False) -> tuple[int, int]:
     if path == "test-cache":
         return (100001, 1)
     else:
