@@ -6,6 +6,7 @@ from typing import Tuple
 from retry import retry
 from utils.config import config
 from utils.redis_handler import get_async_redis_conn, redis_conn, queue_high
+from constants.thumbnail import image_format
 
 folder_path = config['thumbnail_storage']['path']
 max_size = config['thumbnail_storage']['max_size']
@@ -13,14 +14,14 @@ target_storage_size = int(max_size * config['thumbnail_storage']['cleanup_multip
 redis_offset_allowed = config["thumbnail_storage"]["redis_offset_allowed"]
 
 def cleanup() -> None:
-    # First try clenup using redis data
+    # First try cleanup using redis data
     storage_used = int(redis_conn.get(storage_used_key()) or 0)
 
     if storage_used > target_storage_size:
         cleanup_internal(storage_used)
 
     before_storage_used = int(redis_conn.get(storage_used_key()) or 0)
-    (folder_size, file_count) = get_folder_size(folder_path)
+    (folder_size, file_count) = get_folder_size(folder_path, True)
     after_storage_used = int(redis_conn.get(storage_used_key()) or 0)
 
     diff = after_storage_used - before_storage_used
@@ -74,16 +75,21 @@ def check_if_cleanup_needed() -> None:
             queue_high.enqueue(cleanup, job_id=job_id, at_front=True, job_timeout="2h")
 
 
-def get_folder_size(path: str) -> Tuple[int, int]:
+def get_folder_size(path: str, delete_small_images = False) -> Tuple[int, int]:
     total = 0
     file_count = 0
     try:
         with os.scandir(path) as it:
             for entry in it:
                 if entry.is_file():
-                    total += entry.stat().st_size
+                    file_size = entry.stat().st_size
+                    if delete_small_images and entry.name.endswith(image_format) and file_size < 200:
+                        # Image is probably corrupt
+                        os.remove(entry.path)
+                    else:
+                        total += file_size
                 elif entry.is_dir():
-                    total += get_folder_size(entry.path)[0]
+                    total += get_folder_size(entry.path, delete_small_images)[0]
                 file_count += 1
     except FileNotFoundError:
         pass

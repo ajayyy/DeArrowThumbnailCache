@@ -14,9 +14,7 @@ from utils.config import config
 import time as time_module
 from utils.redis_handler import get_async_redis_conn, redis_conn
 from utils.logger import log, log_error
-
-image_format: str = ".webp"
-metadata_format: str = ".txt"
+from constants.thumbnail import image_format, metadata_format
 
 class ThumbnailGenerationError(Exception):
     pass
