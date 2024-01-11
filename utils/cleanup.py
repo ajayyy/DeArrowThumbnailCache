@@ -6,7 +6,7 @@ from typing import Tuple
 from retry import retry
 from utils.config import config
 from utils.redis_handler import get_async_redis_conn, redis_conn, queue_high
-from constants.thumbnail import image_format
+from constants.thumbnail import image_format, minimum_file_size
 
 folder_path = config['thumbnail_storage']['path']
 max_size = config['thumbnail_storage']['max_size']
@@ -75,7 +75,7 @@ def check_if_cleanup_needed() -> None:
             queue_high.enqueue(cleanup, job_id=job_id, at_front=True, job_timeout="2h")
 
 
-def get_folder_size(path: str, delete_small_images = False) -> Tuple[int, int]:
+def get_folder_size(path: str, delete_small_images: bool = False) -> Tuple[int, int]:
     total = 0
     file_count = 0
     try:
@@ -83,7 +83,7 @@ def get_folder_size(path: str, delete_small_images = False) -> Tuple[int, int]:
             for entry in it:
                 if entry.is_file():
                     file_size = entry.stat().st_size
-                    if delete_small_images and entry.name.endswith(image_format) and file_size < 200:
+                    if delete_small_images and entry.name.endswith(image_format) and file_size < minimum_file_size:
                         # Image is probably corrupt
                         os.remove(entry.path)
                     else:

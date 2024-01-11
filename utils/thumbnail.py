@@ -14,7 +14,7 @@ from utils.config import config
 import time as time_module
 from utils.redis_handler import get_async_redis_conn, redis_conn
 from utils.logger import log, log_error
-from constants.thumbnail import image_format, metadata_format
+from constants.thumbnail import image_format, metadata_format, minimum_file_size
 
 class ThumbnailGenerationError(Exception):
     pass
@@ -48,7 +48,19 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
             with open(metadata_filename, "w") as metadata_file:
                 metadata_file.write(title)
 
-        storage_used = (len(title.encode("utf-8")) if title else 0) + os.path.getsize(output_filename)
+        title_file_size = len(title.encode("utf-8")) if title else 0
+        image_file_size = os.path.getsize(output_filename)
+        storage_used = title_file_size + image_file_size
+
+        if image_file_size < minimum_file_size:
+            os.remove(output_filename)
+            if update_redis:
+                try:
+                    asyncio.get_event_loop().run_until_complete(add_storage_used(title_file_size))
+                except Exception as e:
+                    log_error("Failed to update storage used", e)
+
+            raise ThumbnailGenerationError(f"Image file for {video_id} at {time} is too small, probably a premiere: {image_file_size} bytes")
 
         if update_redis:
             try:
