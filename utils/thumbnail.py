@@ -117,14 +117,22 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
     http_proxy = []
     if proxy_url is not None:
         http_proxy = ["-http_proxy", proxy_url]
-    run_ffmpeg(
-        "-y",
-        *http_proxy,
-        "-ss", str(rounded_time), "-i", playback_url.url,
-        "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
-        "-timelimit", "20",
-        timeout=20,
-    )
+    try:
+        run_ffmpeg(
+            "-y",
+            *http_proxy,
+            "-ss", str(rounded_time), "-i", playback_url.url,
+            "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
+            "-timelimit", "20",
+            timeout=20,
+        )
+    except FFmpegError:
+        try:
+            os.remove(output_filename)
+        except FileNotFoundError:
+            pass
+
+        raise
 
 async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
     if not valid_video_id(video_id):
