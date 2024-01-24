@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+import math
 import os
 import re
 from typing import cast
@@ -177,6 +178,17 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
         raise ValueError(f"Invalid video ID: {video_id}")
     if type(time) is not float:
         raise ValueError(f"Invalid time: {time}")
+
+    with os.scandir(get_folder_path(video_id)) as it:
+        truncated_time = math.floor((time * 1000)) / 1000
+        truncated_time_string = str(truncated_time)
+        if "." in truncated_time_string:
+            for entry in it:
+                if entry.is_file() and entry.name.endswith(image_format) \
+                        and entry.name.startswith(truncated_time_string):
+                    time = truncated_time
+                    break
+
 
     _, output_filename, metadata_filename = get_file_paths(video_id, time)
 
