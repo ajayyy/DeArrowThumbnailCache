@@ -186,9 +186,8 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
             for entry in it:
                 if entry.is_file() and entry.name.endswith(image_format) \
                         and entry.name.startswith(truncated_time_string):
-                    time = truncated_time
+                    time = float(entry.name.replace(image_format, ""))
                     break
-
 
     _, output_filename, metadata_filename = get_file_paths(video_id, time)
 
