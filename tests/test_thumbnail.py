@@ -95,10 +95,10 @@ async def load_and_verify_request(video_id: str, time: float, title: str | None 
 
 
 async def load_and_verify_thumbnail(video_id: str, time: float, title: str | None = None) -> None:
-    generate_thumbnail(video_id, time, title, False)
+    generate_thumbnail(video_id, time, title, False, False)
 
     # verify file exists
-    _, output_filename, metadata_filename = get_file_paths(video_id, time)
+    _, output_filename, metadata_filename, _ = get_file_paths(video_id, time, False)
     assert os.path.isfile(output_filename)
     with open(output_filename, "rb") as output_file:
         image = output_file.read()

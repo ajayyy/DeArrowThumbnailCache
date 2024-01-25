@@ -32,6 +32,7 @@ async def get_thumbnail(response: Response, request: Request,
                         generateNow: bool = False,
                         title: str | None = None,
                         officialTime: bool = False,
+                        isLivestream: bool = False,
                         redirectUrl: str | None = None) -> Response:
     if type(videoID) is not str or (type(time) is not float and time is not None) \
             or type(generateNow) is not bool or not valid_video_id(videoID):
@@ -41,7 +42,7 @@ async def get_thumbnail(response: Response, request: Request,
         await set_best_time(videoID, time)
 
     try:
-        return await handle_thumbnail_response(videoID, time, title, response)
+        return await handle_thumbnail_response(videoID, time, isLivestream, title, response)
     except FileNotFoundError:
         pass
 
@@ -74,7 +75,7 @@ async def get_thumbnail(response: Response, request: Request,
         # Start the job if it is not already started
         # TODO: Remove the ttl when proper priority is implemented
         job = queue.enqueue(generate_thumbnail,
-                        args=(videoID, time, title, not in_test()),
+                        args=(videoID, time, title, isLivestream, not in_test()),
                         job_id=job_id,
                         job_timeout=30,
                         failure_ttl=500,
@@ -100,7 +101,7 @@ async def get_thumbnail(response: Response, request: Request,
 
     if result:
         try:
-            return await handle_thumbnail_response(videoID, time, title, response)
+            return await handle_thumbnail_response(videoID, time, isLivestream, title, response)
         except Exception as e:
             log("Server error when getting thumbnails", e)
             return thumbnail_response_error(redirectUrl, "Server error")
@@ -109,8 +110,9 @@ async def get_thumbnail(response: Response, request: Request,
         return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail")
 
 
-async def handle_thumbnail_response(video_id: str, time: float | None, title: str | None, response: Response) -> Response:
-    thumbnail = await get_thumbnail_from_files(video_id, time, title) if time is not None else await get_latest_thumbnail_from_files(video_id)
+async def handle_thumbnail_response(video_id: str, time: float | None, is_livestream: bool, title: str | None, response: Response) -> Response:
+    thumbnail = await get_thumbnail_from_files(video_id, time, is_livestream, title) if time is not None else \
+        await get_latest_thumbnail_from_files(video_id, is_livestream)
     response.headers["X-Timestamp"] = str(thumbnail.time)
     response.headers["Cache-Control"] = "public, max-age=3600"
     if thumbnail.title is not None:

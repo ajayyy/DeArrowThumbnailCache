@@ -3,7 +3,10 @@ from dataclasses import dataclass
 import math
 import os
 import re
+import sys
 from typing import cast
+import requests
+
 from .ffmpeg import run_ffmpeg, FFmpegError
 import pathlib
 
@@ -17,6 +20,8 @@ from utils.redis_handler import get_async_redis_conn, redis_conn
 from utils.logger import log, log_error
 from constants.thumbnail import image_format, metadata_format, minimum_file_size
 
+VIDEO_REQUEST_TIMEOUT = 5
+
 class ThumbnailGenerationError(Exception):
     pass
 
@@ -28,7 +33,7 @@ class Thumbnail:
 
 # Redis queue does not properly support async, and doesn't need it anyway since it is
 # only running one job at a time
-def generate_thumbnail(video_id: str, time: float, title: str | None, update_redis: bool = True) -> None:
+def generate_thumbnail(video_id: str, time: float, title: str | None, is_livestream: bool = False, update_redis: bool = True) -> None:
     try:
         now = time_module.time()
         if not valid_video_id(video_id):
@@ -42,9 +47,9 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
             except Exception as e:
                 log_error("Failed to update last used", e)
 
-        generate_and_store_thumbnail(video_id, time)
+        generate_and_store_thumbnail(video_id, time, is_livestream)
 
-        _, output_filename, metadata_filename = get_file_paths(video_id, time)
+        _, output_filename, metadata_filename, _ = get_file_paths(video_id, time, is_livestream)
         if title is not None:
             with open(metadata_filename, "w") as metadata_file:
                 metadata_file.write(title)
@@ -79,7 +84,7 @@ def generate_thumbnail(video_id: str, time: float, title: str | None, update_red
         raise e
 
 @retry(ThumbnailGenerationError, tries=2, delay=1)
-def generate_and_store_thumbnail(video_id: str, time: float) -> None:
+def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool) -> None:
     print("playback url start", time_module.time())
 
     proxy = get_proxy_url()
@@ -94,13 +99,13 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
             print(f"Generating image for {video_id}, {time_module.time()}"
                     f"{'' if proxy_to_use is None or proxy is None else f' through proxy {proxy.country_code}'}")
 
-            generate_with_ffmpeg(video_id, time, playback_url, proxy_to_use)
+            generate_with_ffmpeg(video_id, time, playback_url, is_livestream, proxy_to_use)
             print("generated", time_module.time())
         except FFmpegError:
             if proxy_url is not None and proxy is not None:
                 # try again through proxy
                 print(f"Trying to generate again through the proxy {proxy.country_code} {time_module.time()}")
-                generate_with_ffmpeg(video_id, time, playback_url, proxy_url)
+                generate_with_ffmpeg(video_id, time, playback_url, is_livestream, proxy_url)
             else:
                 raise
     except FFmpegError as e:
@@ -108,12 +113,33 @@ def generate_and_store_thumbnail(video_id: str, time: float) -> None:
             (f"Failed to generate thumbnail for {video_id} at {time} with proxy {proxy.country_code if proxy is not None else ''}: {e}")
 
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
-                            proxy_url: str | None = None) -> None:
-    output_folder, output_filename, _ = get_file_paths(video_id, time)
+                            is_livestream: bool, proxy_url: str | None = None) -> None:
+    output_folder, output_filename, _, video_filename = get_file_paths(video_id, time, is_livestream)
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     # Round down time to nearest frame be consistent with browsers
     rounded_time = int(time * playback_url.fps) / playback_url.fps
+
+    if is_livestream:
+        video_request_start = time_module.time()
+        def trace_function(*_):
+            if time_module.time() - video_request_start > VIDEO_REQUEST_TIMEOUT:
+                raise Exception("Video Request Timed Out")
+
+        sys.settrace(trace_function)
+        try:
+            video = requests.get(playback_url.url, timeout=5)
+            with open(video_filename, "wb") as f:
+                f.write(video.content)
+        except Exception:
+            try:
+                os.remove(video_filename)
+            except FileNotFoundError:
+                pass
+
+            raise
+        finally:
+            sys.settrace(None)
 
     http_proxy = []
     if proxy_url is not None:
@@ -122,7 +148,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         run_ffmpeg(
             "-y",
             *http_proxy,
-            "-ss", str(rounded_time), "-i", playback_url.url,
+            "-ss", str(rounded_time), "-i", video_filename if is_livestream else playback_url.url,
             "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
             "-timelimit", "20",
             timeout=20,
@@ -134,8 +160,11 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             pass
 
         raise
+    finally:
+        if is_livestream:
+            os.remove(video_filename)
 
-async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
+async def get_latest_thumbnail_from_files(video_id: str, is_livestream: bool) -> Thumbnail:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
 
@@ -168,12 +197,12 @@ async def get_latest_thumbnail_from_files(video_id: str) -> Thumbnail:
 
     if selected_file is not None:
         # Remove file extension
-        time = float(re.sub(r"\.\S{3,4}$", "", selected_file))
-        return await get_thumbnail_from_files(video_id, time)
+        time = float(re.sub(r"(?:-live)?\.\S{3,4}$", "", selected_file))
+        return await get_thumbnail_from_files(video_id, time, is_livestream)
 
     raise FileNotFoundError(f"Failed to find thumbnail for {video_id}")
 
-async def get_thumbnail_from_files(video_id: str, time: float, title: str | None = None) -> Thumbnail:
+async def get_thumbnail_from_files(video_id: str, time: float, is_livestream: bool, title: str | None = None) -> Thumbnail:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
     if type(time) is not float:
@@ -186,10 +215,13 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
             for entry in it:
                 if entry.is_file() and entry.name.endswith(image_format) \
                         and entry.name.startswith(truncated_time_string):
-                    time = float(entry.name.replace(image_format, ""))
+                    try:
+                        time = float(entry.name.replace(image_format, ""))
+                    except ValueError:
+                        continue
                     break
 
-    _, output_filename, metadata_filename = get_file_paths(video_id, time)
+    _, output_filename, metadata_filename, _ = get_file_paths(video_id, time, is_livestream)
 
     with open(output_filename, "rb") as file:
         image_data = file.read()
@@ -211,7 +243,7 @@ async def get_thumbnail_from_files(video_id: str, time: float, title: str | None
         else:
             return Thumbnail(image_data, time)
 
-def get_file_paths(video_id: str, time: float) -> tuple[str, str, str]:
+def get_file_paths(video_id: str, time: float, is_livestream: bool) -> tuple[str, str, str, str]:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
     if type(time) is not float:
@@ -219,10 +251,11 @@ def get_file_paths(video_id: str, time: float) -> tuple[str, str, str]:
 
 
     output_folder = get_folder_path(video_id)
-    output_filename = f"{output_folder}/{time}{image_format}"
+    output_filename = f"{output_folder}/{time}{'-live' if is_livestream else ''}{image_format}"
     metadata_filename = f"{output_folder}/{time}{metadata_format}"
+    video_filename = f"{output_folder}/{time}.mp4"
 
-    return (output_folder, output_filename, metadata_filename)
+    return (output_folder, output_filename, metadata_filename, video_filename)
 
 def get_folder_path(video_id: str) -> str:
     if not valid_video_id(video_id):
