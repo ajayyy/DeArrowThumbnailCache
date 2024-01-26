@@ -131,6 +131,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             video = requests.get(playback_url.url, timeout=5)
             with open(video_filename, "wb") as f:
                 f.write(video.content)
+                print(f"Downloaded livestream video to{video_filename} with size of {len(video.content)}")
         except Exception:
             try:
                 os.remove(video_filename)
@@ -142,7 +143,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             sys.settrace(None)
 
     http_proxy = []
-    if proxy_url is not None:
+    if proxy_url is not None and not is_livestream:
         http_proxy = ["-http_proxy", proxy_url]
     try:
         run_ffmpeg(
