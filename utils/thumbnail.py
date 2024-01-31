@@ -128,7 +128,14 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
 
         sys.settrace(trace_function)
         try:
-            video = requests.get(playback_url.url, timeout=5)
+            proxies = {
+                "http": proxy_url,
+                "https": proxy_url
+            } if proxy_url is not None else None
+
+            video = requests.get(playback_url.url,
+                                 timeout=5,
+                                 proxies=proxies)
             with open(video_filename, "wb") as f:
                 f.write(video.content)
                 print(f"Downloaded livestream video to{video_filename} with size of {len(video.content)}")
