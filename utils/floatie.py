@@ -20,7 +20,7 @@ class InnertubeDetails:
 
 innertube_details = InnertubeDetails(
     api_key="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
-    client_version="18.20.38",
+    client_version="19.09.36",
     client_name="3",
     android_version="12"
 )
@@ -43,7 +43,8 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     payload = json.dumps({
         "context": context,
         "videoId": video_id,
-        "params": "CgIQBg",
+        # https://github.com/iv-org/invidious/blob/08390acd0c17875fddb84cabba54197a5b5740e4/src/invidious/videos/parser.cr#L147
+        "params": "CgIIAdgDAQ%3D%3D",
         "playbackContext": {
             "contentPlaybackContext": {
                 "html5Preference": "HTML5_PREF_WANTS"
@@ -55,8 +56,9 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     headers = {
         'X-Youtube-Client-Name': innertube_details.client_name,
         'X-Youtube-Client-Version': innertube_details.client_version,
+        'x-goog-api-format-version': '2',
         'Origin': 'https://www.youtube.com',
-        'User-Agent': f'com.google.android.youtube/{innertube_details.client_version} (Linux; U; Android {innertube_details.android_version}) gzip',
+        'User-Agent': f'com.google.android.youtube/{innertube_details.client_version} (Linux; U; Android {innertube_details.android_version}; US) gzip',
         'Content-Type': 'application/json',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-us,en;q=0.5',
