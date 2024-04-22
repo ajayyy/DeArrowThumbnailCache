@@ -127,7 +127,7 @@ def thumbnail_response_error(redirect_url: str | None, text: str) -> Response:
     if redirect_url is not None and redirect_url.startswith("https://i.ytimg.com"):
         return RedirectResponse(redirect_url)
     else:
-        raise HTTPException(status_code=400, detail=text)
+        raise HTTPException(status_code=204, detail=text)
 
 @app.get("/api/v1/status")
 def get_status(auth: str | None = None) -> dict[str, Any]:
