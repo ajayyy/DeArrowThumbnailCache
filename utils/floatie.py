@@ -43,8 +43,6 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     payload = json.dumps({
         "context": context,
         "videoId": video_id,
-        # https://github.com/iv-org/invidious/blob/08390acd0c17875fddb84cabba54197a5b5740e4/src/invidious/videos/parser.cr#L147
-        "params": "CgIIAdgDAQ%3D%3D",
         "playbackContext": {
             "contentPlaybackContext": {
                 "html5Preference": "HTML5_PREF_WANTS"
