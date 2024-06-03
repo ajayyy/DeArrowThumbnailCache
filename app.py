@@ -19,7 +19,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Timestamp", "X-Title"]
+    expose_headers=["X-Timestamp", "X-Title", "X-Failure-Reason"],
 )
 
 @app.get("/")
