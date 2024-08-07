@@ -8,6 +8,7 @@ thumbnail_storage:
   max_size: 50000000
   redis_offset_allowed: 20
   max_before_async_generation: 15
+  max_queue_size: 10000
 redis:
   host: localhost
   port: 32774

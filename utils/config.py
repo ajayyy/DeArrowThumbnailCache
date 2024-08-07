@@ -15,6 +15,7 @@ class ThumbnailStorage(TypedDict):
     cleanup_multiplier: float
     redis_offset_allowed: int
     max_before_async_generation: int
+    max_queue_size: int
 
 class RedisConfig(TypedDict):
     host: str
