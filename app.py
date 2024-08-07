@@ -74,7 +74,7 @@ async def get_thumbnail(response: Response, request: Request,
             job = other_queue_job
 
     if job is None or job.is_finished:
-        if len(queue) < config["thumbnail_storage"]["max_queue_size"]:
+        if len(queue) > config["thumbnail_storage"]["max_queue_size"]:
             return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to queue being too big")
 
         # Start the job if it is not already started
