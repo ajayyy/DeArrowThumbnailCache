@@ -73,7 +73,10 @@ async def get_thumbnail(response: Response, request: Request,
             # New queue is low, old queue is high, prefer old one
             job = other_queue_job
 
-    if (job is None or job.is_finished) and len(queue) < config["thumbnail_storage"]["max_queue_size"]:
+    if job is None or job.is_finished:
+        if len(queue) < config["thumbnail_storage"]["max_queue_size"]:
+            return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to queue being too big")
+
         # Start the job if it is not already started
         # TODO: Remove the ttl when proper priority is implemented
         job = queue.enqueue(generate_thumbnail,
