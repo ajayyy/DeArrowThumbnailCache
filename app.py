@@ -1,3 +1,4 @@
+import traceback
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -8,6 +9,7 @@ from typing import Any
 from hmac import compare_digest
 from rq.worker import Worker
 from utils.test_utils import in_test
+import logging
 
 from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
 from utils.video import valid_video_id
@@ -21,6 +23,8 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Timestamp", "X-Title", "X-Failure-Reason"],
 )
+
+logger = logging.getLogger('uvicorn.error')
 
 @app.get("/")
 def root() -> RedirectResponse:
@@ -165,8 +169,8 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
             "workers_count": len(workers),
         }
     except Exception as e:
-        print("worker count failed to calculate")
-        print(f"worker error: {e}")
+        logger.error("worker count failed to calculate")
+        logger.error(f"worker error: {e}\n{traceback.format_exc()}")
         return {
             "workers": [],
             "workers_count": 0
