@@ -165,6 +165,7 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
             "workers_count": len(workers),
         }
     except Exception as e:
+        print("worker count failed to calculate")
         print(f"worker error: {e}")
         return {
             "workers": [],
