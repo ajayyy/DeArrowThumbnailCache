@@ -12,8 +12,6 @@ from utils.test_utils import in_test
 from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
 from utils.video import valid_video_id
 
-from traceback import print_exc
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -166,8 +164,8 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
             "workers": [get_worker_info(worker, is_authorized) for worker in workers],
             "workers_count": len(workers),
         }
-    except Exception:
-        print_exc()
+    except Exception as e:
+        print(f"worker error: {e}")
         return {
             "workers": [],
             "workers_count": 0
