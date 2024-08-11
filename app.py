@@ -168,9 +168,8 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
             "workers": [get_worker_info(worker, is_authorized) for worker in workers],
             "workers_count": len(workers),
         }
-    except Exception as e:
-        logger.error("worker count failed to calculate")
-        logger.error(f"worker error: {e}\n{traceback.format_exc()}")
+    except Exception:
+        logger.error(f"worker error: {traceback.format_exc()}")
         return {
             "workers": [],
             "workers_count": 0
