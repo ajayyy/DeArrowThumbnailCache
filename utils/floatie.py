@@ -80,14 +80,15 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
         raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 
     data = response.json()
-    if data["videoDetails"]["videoId"] != video_id:
-        raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
 
     playability_status = data["playabilityStatus"]["status"]
     if playability_status != "OK":
         if playability_status == "LOGIN_REQUIRED":
-            raise InnertubeLoginRequiredError("Login required")
+            raise InnertubeLoginRequiredError(f"Login required: {data['playabilityStatus'].get('reason', 'no reason')}")
         else:
             raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
+
+    if data["videoDetails"]["videoId"] != video_id:
+        raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
 
     return data["streamingData"]["adaptiveFormats"]
