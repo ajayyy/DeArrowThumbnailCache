@@ -120,6 +120,10 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
     # Round down time to nearest frame be consistent with browsers
     rounded_time = int(time * playback_url.fps) / playback_url.fps
 
+    # Rounding error with 60 fps videos cause the wrong frame to render
+    if playback_url.fps == 60:
+        rounded_time = max(0, rounded_time - 1/100)
+
     if is_livestream:
         video_request_start = time_module.time()
         def trace_function(*_):
