@@ -25,12 +25,16 @@ class ProxyInfoConfig(TypedDict):
     url: str
     country_code: str | None
 
+class YTAuth(TypedDict):
+    visitorData: str
+
 class Config(TypedDict):
     server: ServerSettings
     thumbnail_storage: ThumbnailStorage
     redis: RedisConfig
     default_max_height: int
     status_auth_password: str
+    yt_auth: YTAuth
     try_floatie: bool
     try_ytdlp: bool
     skip_local_ffmpeg: bool

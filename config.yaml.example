@@ -12,6 +12,8 @@ thumbnail_storage:
 redis:
   host: localhost
   port: 32774
+yt_auth:
+  visitorData: "Cgt0bkJPQ1poV1VUZyiniom3BjIKCgJDQRIEGgAgGA%3D%3D"
 default_max_height: 720
 status_auth_password: password
 skip_local_ffmpeg: false

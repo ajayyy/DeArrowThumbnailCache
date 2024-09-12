@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import cast
 import requests
 import json
+from utils.config import config
 
 class InnertubeError(Exception):
     pass
@@ -35,7 +36,7 @@ context = {
     "osVersion": innertube_details.android_version,
     "hl": "en",
     "gl": "US",
-    "visitorData": "Cgs0djZuYnNmTWZ3VSjUnOa1BjIKCgJDQRIEGgAgSw%3D%3D"
+    "visitorData": config["yt_auth"]["visitorData"]
   }
 }
 
