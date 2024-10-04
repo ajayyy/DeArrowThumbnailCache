@@ -230,7 +230,7 @@ def get_metrics() -> str:
     }
     worker_gauges = {
         "current_time": lambda _: current_time,
-        "worker_birth_date": lambda w: w.birth_date.timestamp(),
+        "worker_birth_date": lambda w: w.birth_date.timestamp() if w.birth_date else None,
         "worker_busy": lambda w: int(w.get_state() == "busy"),
         "worker_successful_job_count": lambda w: w.successful_job_count,
         "worker_failed_job_count": lambda w: w.failed_job_count,
