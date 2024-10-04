@@ -52,3 +52,4 @@ disallow_untyped_decorators=true
 reportUnknownMemberType=false
 reportUnknownVariableType=false
 reportUnknownArgumentType=false
+reportUnknownLambdaType=false
