@@ -286,9 +286,10 @@ def get_metrics() -> str:
         "# HELP dearrow_worker_working_time Number of seconds this worker has spent working",
         "# TYPE dearrow_worker_working_time counter",
         *[
-            f'dearrow_{g_name}{{worker_name="{w.name}"}} {func(w)}'
+            f'dearrow_{g_name}{{worker_name="{w.name}"}} {result}'
             for w in workers
             for g_name, func in worker_gauges.items()
+            if (result := func(w)) is not None
         ],
     ]
 
