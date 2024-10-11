@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 from typing import cast
 import requests
 import json
@@ -41,6 +42,27 @@ context = {
 }
 
 def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+    proxies = {
+        "http": proxy_url,
+        "https": proxy_url
+    } if proxy_url is not None else None
+
+    if proxy_url:
+        print(f"Using proxy {proxy_url}")
+
+    # Get the visitor data token
+    url = f"https://www.youtube.com/watch?v={video_id}"
+
+    response = requests.request("GET", url, proxies=proxies, timeout=10)
+    if not response.ok:
+        raise InnertubeError(f"Google token fetch failed with {response.status_code}")
+
+    visitor_data_match = re.search(r'"VISITOR_DATA":"([^"]+)"', response.text)
+    visitor_data = visitor_data_match.group(1) if visitor_data_match else None
+
+    if not visitor_data:
+        print("Failed to get visitor data")
+
     url = f"https://www.youtube.com/youtubei/v1/player?key={innertube_details.api_key}"
 
     payload = json.dumps({
@@ -57,7 +79,7 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     headers = {
         'X-Youtube-Client-Name': innertube_details.client_name,
         'X-Youtube-Client-Version': innertube_details.client_version,
-        'X-Goog-Visitor-Id': cast(str, context["client"]["visitorData"]),
+        'X-Goog-Visitor-Id': visitor_data or cast(str, context["client"]["visitorData"]),
         'x-goog-api-format-version': '2',
         'Origin': 'https://www.youtube.com',
         'User-Agent': f'com.google.android.youtube/{innertube_details.client_version} (Linux; U; Android {innertube_details.android_version}; US) gzip',
@@ -67,14 +89,6 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
         'Sec-Fetch-Mode': 'navigate',
         'Connection': 'close'
     }
-
-    proxies = {
-        "http": proxy_url,
-        "https": proxy_url
-    } if proxy_url is not None else None
-
-    if proxy_url:
-        print(f"Using proxy {proxy_url}")
 
     response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies, timeout=10)
     if not response.ok:
@@ -87,6 +101,7 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
         if playability_status == "LOGIN_REQUIRED":
             raise InnertubeLoginRequiredError(f"Login required: {data['playabilityStatus'].get('reason', 'no reason')}")
         else:
+            print(data)
             raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
 
     if data["videoDetails"]["videoId"] != video_id:
