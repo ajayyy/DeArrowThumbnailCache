@@ -1,8 +1,11 @@
+import json
 import traceback
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from utils.config import config
+from utils.floatie import fetch_video_data
+from utils.proxy import get_proxy_url
 from utils.redis_handler import wait_for_message, queue_high, queue_low, redis_conn
 from utils.logger import log
 from typing import Any
@@ -213,6 +216,21 @@ def get_worker_info(worker: Worker, is_authorized: bool) -> dict[str, Any]:
         }
     except Exception:
         return {}
+
+@app.get("/api/v1/floatie")
+def get_floatie(videoID: str, auth: str) -> Response:
+    if auth != config["floatie_auth"]:
+        return Response(content="Unauthorized", media_type="text/plain", status_code=401)
+
+    proxy = get_proxy_url()
+    proxy_url = proxy.url if proxy is not None else None
+
+    try:
+        data = fetch_video_data(videoID, proxy_url)
+
+        return Response(content=json.dumps(data), media_type="application/json")
+    except Exception as e:
+        return Response(content=str(e), media_type="text/plain", status_code=500)
 
 @app.get("/metrics", response_class=Response)
 def get_metrics() -> str:

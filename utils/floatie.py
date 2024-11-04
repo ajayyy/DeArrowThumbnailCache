@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import re
-from typing import cast
+from typing import Any, cast
 import requests
 import json
 from utils.config import config
@@ -41,7 +41,7 @@ context = {
   }
 }
 
-def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+def fetch_video_data(video_id: str, proxy_url: str | None) -> dict[str, Any]:
     proxies = {
         "http": proxy_url,
         "https": proxy_url
@@ -107,4 +107,7 @@ def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, 
     if data["videoDetails"]["videoId"] != video_id:
         raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
 
-    return data["streamingData"]["adaptiveFormats"]
+    return data
+
+def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+    return fetch_video_data(video_id, proxy_url)["streamingData"]["adaptiveFormats"]
