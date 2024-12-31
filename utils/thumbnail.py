@@ -94,7 +94,6 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
     except Exception:
         if proxy is not None and proxy.status_url is not None:
             send_fail_status(proxy.status_url)
-            pass
         raise
 
     print("playback url done", time_module.time())
@@ -117,14 +116,12 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
     except FFmpegError as e:
         if proxy is not None and proxy.status_url is not None:
             send_fail_status(proxy.status_url)
-            pass
 
         raise ThumbnailGenerationError \
             (f"Failed to generate thumbnail for {video_id} at {time} with proxy {proxy.country_code if proxy is not None else ''}: {e}")
 
     if proxy is not None and proxy.status_url is not None:
         send_success_status(proxy.status_url)
-        pass
 
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
