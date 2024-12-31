@@ -306,7 +306,7 @@ async def get_best_time(video_id: str) -> bytes | None:
     return cast(bytes | None, await (await get_async_redis_conn()).get(get_best_time_key(video_id)))
 
 def send_fail_status(proxy_status_url: str) -> None:
-    requests.post(proxy_status_url + "/api/fail")
+    requests.post(proxy_status_url + "api/fail")
 
 def send_success_status(proxy_status_url: str) -> None:
-    requests.post(proxy_status_url + "/api/success")
+    requests.post(proxy_status_url + "api/success")
