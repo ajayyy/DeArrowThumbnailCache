@@ -89,7 +89,13 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
 
     proxy = get_proxy_url()
     proxy_url = proxy.url if proxy is not None else None
-    playback_url = get_playback_url(video_id, proxy_url)
+    try:
+        playback_url = get_playback_url(video_id, proxy_url)
+    except Exception:
+        if proxy is not None and proxy.status_url is not None:
+            send_fail_status(proxy.status_url)
+            pass
+        raise
 
     print("playback url done", time_module.time())
 
@@ -109,8 +115,16 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
             else:
                 raise
     except FFmpegError as e:
+        if proxy is not None and proxy.status_url is not None:
+            send_fail_status(proxy.status_url)
+            pass
+
         raise ThumbnailGenerationError \
             (f"Failed to generate thumbnail for {video_id} at {time} with proxy {proxy.country_code if proxy is not None else ''}: {e}")
+
+    if proxy is not None and proxy.status_url is not None:
+        send_success_status(proxy.status_url)
+        pass
 
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
@@ -290,3 +304,9 @@ async def set_best_time(video_id: str, time: float) -> None:
 
 async def get_best_time(video_id: str) -> bytes | None:
     return cast(bytes | None, await (await get_async_redis_conn()).get(get_best_time_key(video_id)))
+
+def send_fail_status(proxy_status_url: str) -> None:
+    requests.post(proxy_status_url + "/api/fail")
+
+def send_success_status(proxy_status_url: str) -> None:
+    requests.post(proxy_status_url + "/api/success")

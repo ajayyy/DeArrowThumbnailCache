@@ -23,6 +23,7 @@ class RedisConfig(TypedDict):
 
 class ProxyInfoConfig(TypedDict):
     url: str
+    status_url: str | None
     country_code: str | None
 
 class YTAuth(TypedDict):

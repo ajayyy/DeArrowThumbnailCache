@@ -45,15 +45,16 @@ def verify_proxy_url(url: str) -> bool:
 @dataclass
 class ProxyInfo:
     url: str
+    status_url: str | None
     country_code: str | None
 
 def get_proxy_url() -> ProxyInfo | None:
     if config["proxy_token"] is None:
         if "proxy_urls" in config and config["proxy_urls"] is not None and len(config["proxy_urls"]) > 0:
             chosen_proxy = random.choice(config["proxy_urls"])
-            return ProxyInfo(chosen_proxy["url"], chosen_proxy["country_code"])
+            return ProxyInfo(chosen_proxy["url"], chosen_proxy["status_url"], chosen_proxy["country_code"])
         elif "proxy_url" in config and config["proxy_url"] is not None:
-            return ProxyInfo(config["proxy_url"], None)
+            return ProxyInfo(config["proxy_url"], None, None)
         else:
             return None
 
@@ -65,6 +66,6 @@ def get_proxy_url() -> ProxyInfo | None:
         chosen_proxy = proxies[random.randint(0, len(proxies) - 1)]
         url = f'http://{chosen_proxy["username"]}:{chosen_proxy["password"]}@{chosen_proxy["proxy_address"]}:{chosen_proxy["port"]}/'
         if verify_proxy_url(url):
-            return ProxyInfo(url, chosen_proxy["country_code"])
+            return ProxyInfo(url, None, chosen_proxy["country_code"])
         else:
             raise ValueError(f"Proxy url is invalid {url}")
