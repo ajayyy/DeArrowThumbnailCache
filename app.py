@@ -143,7 +143,7 @@ def thumbnail_response_error(redirect_url: str | None, text: str) -> Response:
         })
 
 @app.get("/api/v1/status")
-def get_status(auth: str | None = None) -> dict[str, Any]:
+def get_status(includeDefault: bool = True, auth: str | None = None) -> dict[str, Any]:
     try:
         workers = Worker.all(connection=redis_conn)
         is_authorized = auth is not None and compare_digest(auth, config["status_auth_password"])
@@ -167,7 +167,7 @@ def get_status(auth: str | None = None) -> dict[str, Any]:
                     "started_jobs": queue_low.started_job_registry.count,
                     "deferred_jobs": queue_low.deferred_job_registry.count,
                     "cancelled_jobs": queue_low.canceled_job_registry.count,
-                },
+                } if includeDefault else None,
             },
             "workers": [get_worker_info(worker, is_authorized) for worker in workers],
             "workers_count": len(workers),
