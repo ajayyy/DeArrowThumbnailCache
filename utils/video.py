@@ -78,7 +78,12 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
         "fragment_retries": 0,
         "extractor_retries": 0,
         "file_access_retries": 0,
-        "socket_timeout": 15
+        "socket_timeout": 15,
+        "extractor_args": {
+            "youtube": {
+                "skip": ["dash", "hls", "translated_subs"],
+            }
+        }
     }) as ydl:
         info: Any = ydl.extract_info(url, download=False)
 

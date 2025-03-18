@@ -59,4 +59,4 @@ uvicorn==0.22.0
 uvloop==0.19.0
 watchfiles==0.22.0
 websockets==13.1
-yt-dlp @ git+https://github.com/yt-dlp/yt-dlp@983c58fb7a809d827b5821d493819da954f2c00b
+yt-dlp @ git+https://github.com/yt-dlp/yt-dlp@2ee3a0aff9be2be3bea60640d3d8a0febaf0acb6
