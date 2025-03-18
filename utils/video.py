@@ -82,6 +82,7 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
         "extractor_args": {
             "youtube": {
                 "skip": ["dash", "hls", "translated_subs"],
+                "player_client": ["tv"]
             }
         }
     }) as ydl:
