@@ -90,7 +90,7 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
     proxy = get_proxy_url()
     proxy_url = proxy.url if proxy is not None else None
     try:
-        playback_url = get_playback_url(video_id, proxy_url)
+        playback_url = get_playback_url(video_id, proxy_url, is_livestream)
     except Exception:
         if proxy is not None and proxy.status_url is not None:
             send_fail_status(proxy.status_url)

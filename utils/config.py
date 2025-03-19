@@ -37,6 +37,7 @@ class Config(TypedDict):
     status_auth_password: str
     yt_auth: YTAuth
     try_floatie: bool
+    try_floatie_for_live: bool
     try_ytdlp: bool
     skip_local_ffmpeg: bool
     proxy_url: str | None
