@@ -15,9 +15,9 @@ class PlaybackUrl:
 def valid_video_id(video_id: str) -> bool:
     return type(video_id) is str and re.match(r"^[A-Za-z0-9_\-]{11}$", video_id) is not None
 
-def get_playback_url(video_id: str, proxy_url: str | None = None,
-                        height: int = config["default_max_height"],
-                        is_livestream = False) -> PlaybackUrl:
+def get_playback_url(video_id: str, proxy_url: str | None,
+                        is_livestream: bool,
+                        height: int = config["default_max_height"]) -> PlaybackUrl:
     playback_urls = get_playback_urls(video_id, proxy_url, is_livestream)
 
     for url in playback_urls:
