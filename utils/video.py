@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+import random
 import re
 from typing import Any, cast
 import yt_dlp # pyright: ignore[reportMissingTypeStubs]
 from utils.config import config
 import utils.floatie as floatie
+import time as time_module
+from utils.redis_handler import redis_conn
 
 ydl = yt_dlp.YoutubeDL({
     "retries": 0,
@@ -86,9 +89,23 @@ def format_has_av1(format: dict[str, str | int]) -> bool:
         or  ("vcodec" in format and "av01" in cast(str, format["vcodec"]))
 
 def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+    wait_time = 0
+    while redis_conn.zcard("concurrent_ytdlp") > config["max_concurrent_ytdlp"]:
+        print("Waiting for other ytdlp to finish")
+        wait_time += 1
+
+        # Remove expired items every second
+        if wait_time % 10 == 0:
+            redis_conn.zremrangebyscore("concurrent_ytdlp", "-inf", time_module.time() - 60)
+
+        time_module.sleep(0.1 + 0.05 * random.random())
+    redis_conn.zadd("concurrent_ytdlp", { video_id: time_module.time() })
+
     url = f"https://www.youtube.com/watch?v={video_id}"
     ydl.params["proxy"] = proxy_url
     info: Any = ydl.extract_info(url, download=False)
+
+    redis_conn.zrem("concurrent_ytdlp", video_id)
 
     formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
     if type(formats) is list:

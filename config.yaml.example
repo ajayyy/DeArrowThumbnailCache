@@ -16,6 +16,7 @@ yt_auth:
   visitorData: "Cgt0bkJPQ1poV1VUZyiniom3BjIKCgJDQRIEGgAgGA%3D%3D"
 default_max_height: 720
 max_concurrent_renders: 5
+max_concurrent_ytdlp: 5
 status_auth_password: password
 skip_local_ffmpeg: false
 try_floatie: true

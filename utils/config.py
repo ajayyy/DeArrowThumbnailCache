@@ -41,6 +41,7 @@ class Config(TypedDict):
     try_ytdlp: bool
     skip_local_ffmpeg: bool
     max_concurrent_renders: int
+    max_concurrent_ytdlp: int
     proxy_url: str | None
     proxy_urls: list[ProxyInfoConfig] | None
     proxy_token: str | None
