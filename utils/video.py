@@ -5,6 +5,20 @@ import yt_dlp # pyright: ignore[reportMissingTypeStubs]
 from utils.config import config
 import utils.floatie as floatie
 
+ydl = yt_dlp.YoutubeDL({
+    "retries": 0,
+    "fragment_retries": 0,
+    "extractor_retries": 0,
+    "file_access_retries": 0,
+    "socket_timeout": 15,
+    "extractor_args": {
+        "youtube": {
+            "skip": ["dash", "hls", "translated_subs"],
+            "player_client": ["tv"]
+        }
+    }
+})
+
 @dataclass
 class PlaybackUrl:
     url: str
@@ -73,24 +87,11 @@ def format_has_av1(format: dict[str, str | int]) -> bool:
 
 def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
     url = f"https://www.youtube.com/watch?v={video_id}"
-    with yt_dlp.YoutubeDL({
-        "proxy": proxy_url,
-        "retries": 0,
-        "fragment_retries": 0,
-        "extractor_retries": 0,
-        "file_access_retries": 0,
-        "socket_timeout": 15,
-        "extractor_args": {
-            "youtube": {
-                "skip": ["dash", "hls", "translated_subs"],
-                "player_client": ["tv"]
-            }
-        }
-    }) as ydl:
-        info: Any = ydl.extract_info(url, download=False)
+    ydl.params["proxy"] = proxy_url
+    info: Any = ydl.extract_info(url, download=False)
 
-        formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
-        if type(formats) is list:
-            return formats
-        else:
-            raise ValueError("Failed to parse playback URLs: {video_id}")
+    formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
+    if type(formats) is list:
+        return formats
+    else:
+        raise ValueError("Failed to parse playback URLs: {video_id}")

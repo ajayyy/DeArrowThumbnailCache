@@ -7,6 +7,9 @@ from utils.redis_handler import redis_conn
 from utils.config import config
 from utils.misc import generate_worker_name
 
+# Import some modules to pre-run init before worker forks
+import utils.video  # noqa: F401
+
 listen = ["high", "default"]
 worker = Worker(listen, connection=redis_conn, name=generate_worker_name())
 
