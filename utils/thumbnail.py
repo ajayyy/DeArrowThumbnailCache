@@ -199,6 +199,8 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         if is_livestream:
             os.remove(video_filename)
 
+        redis_conn.zrem("concurrent_renders", f"{video_id} {time} {is_livestream}")
+
 async def get_latest_thumbnail_from_files(video_id: str, is_livestream: bool) -> Thumbnail:
     if not valid_video_id(video_id):
         raise ValueError(f"Invalid video ID: {video_id}")
