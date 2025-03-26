@@ -128,6 +128,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
     wait_time = 0
     while redis_conn.zcard("concurrent_renders") > config["max_concurrent_renders"]:
+        print("Waiting for other renders to finish")
         wait_time += 1
 
         # Remove expired items every second
