@@ -40,6 +40,7 @@ class Config(TypedDict):
     try_floatie_for_live: bool
     try_ytdlp: bool
     skip_local_ffmpeg: bool
+    max_concurrent_renders: int
     proxy_url: str | None
     proxy_urls: list[ProxyInfoConfig] | None
     proxy_token: str | None
