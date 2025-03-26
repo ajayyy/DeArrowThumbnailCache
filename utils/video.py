@@ -103,12 +103,14 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
 
     url = f"https://www.youtube.com/watch?v={video_id}"
     ydl.params["proxy"] = proxy_url
-    info: Any = ydl.extract_info(url, download=False)
 
-    redis_conn.zrem("concurrent_ytdlp", video_id)
+    try:
+        info: Any = ydl.extract_info(url, download=False)
 
-    formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
-    if type(formats) is list:
-        return formats
-    else:
-        raise ValueError("Failed to parse playback URLs: {video_id}")
+        formats: list[dict[str, str | int]] = ydl.sanitize_info(info)["formats"] # pyright: ignore
+        if type(formats) is list:
+            return formats
+        else:
+            raise ValueError("Failed to parse playback URLs: {video_id}")
+    finally:
+        redis_conn.zrem("concurrent_ytdlp", video_id)
