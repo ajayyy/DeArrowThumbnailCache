@@ -22,6 +22,12 @@ jobs:
         run: docker compose -f docker/docker-compose.yml up -d
       - name: Check running containers
         run: docker ps
+
+      - name: Set up WireGuard Connection
+        uses: niklaskeerl/easy-wireguard-action@50341d5f4b8245ff3a90e278aca67b2d283c78d0
+        with:
+          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG_FILE }}
+
       - run: pip install -r requirements.txt
       - name: Run Tests
         timeout-minutes: 5
