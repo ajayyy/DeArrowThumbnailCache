@@ -20,4 +20,6 @@ status_auth_password: password
 skip_local_ffmpeg: false
 try_floatie: true
 try_ytdlp: true
+max_concurrent_renders: 100
+max_concurrent_ytdlp: 100
 debug: true
