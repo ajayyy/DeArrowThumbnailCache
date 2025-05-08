@@ -26,6 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Timestamp", "X-Title", "X-Failure-Reason"],
+    max_age=86400,
 )
 
 logger = logging.getLogger('uvicorn.error')
