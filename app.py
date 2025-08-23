@@ -233,8 +233,8 @@ def get_floatie(videoID: str, auth: str) -> Response:
     except Exception as e:
         return Response(content=str(e), media_type="text/plain", status_code=500)
 
-@app.get("/metrics", response_class=Response)
-def get_metrics() -> str:
+@app.get("/metrics")
+def get_metrics() -> Response:
     workers = Worker.all(connection=redis_conn)
     current_time = time.time()
     queues = {"high": queue_high, "low": queue_low}
@@ -312,7 +312,7 @@ def get_metrics() -> str:
         ],
     ]
 
-    return "\n".join(result)
+    return Response(content="\n".join(result), headers={"Content-Type" : "text/plain; version=0.0.4"})
 
 if __name__ == "__main__":
     import uvicorn
