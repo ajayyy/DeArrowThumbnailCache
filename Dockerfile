@@ -21,6 +21,7 @@ ENV PYTHONUNBUFFERED=1
 CMD ["python", "app.py"]
 
 FROM base AS worker
+RUN apk add --no-cache deno
 EXPOSE 3002
 HEALTHCHECK CMD curl --no-progress-meter -fo /dev/null http://localhost:3002/ || exit 1
 # Force unbuffered output to stdout
