@@ -14,12 +14,12 @@ ydl = yt_dlp.YoutubeDL({
     "extractor_retries": 0,
     "file_access_retries": 0,
     "socket_timeout": 15,
-    "extractor_args": {
-        "youtube": {
-            "skip": ["dash", "hls", "translated_subs"],
-            "player_client": ["tv"]
-        }
-    }
+    # "extractor_args": {
+    #     "youtube": {
+    #         "skip": ["dash", "hls", "translated_subs"],
+    #         "player_client": ["tv"]
+    #     }
+    # }
 })
 
 @dataclass
