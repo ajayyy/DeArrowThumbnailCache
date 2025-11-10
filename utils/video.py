@@ -8,6 +8,24 @@ import utils.floatie as floatie
 import time as time_module
 from utils.redis_handler import redis_conn
 
+def create_ytdlp_object():
+    return yt_dlp.YoutubeDL({
+        "retries": 0,
+        "fragment_retries": 0,
+        "extractor_retries": 0,
+        "file_access_retries": 0,
+        "socket_timeout": 15,
+        "remote_components": ["ejs:github"]
+        # "extractor_args": {
+        #     "youtube": {
+        #         "skip": ["dash", "hls", "translated_subs"],
+        #         "player_client": ["tv"]
+        #     }
+        # }
+    })
+
+ydl = create_ytdlp_object()
+
 @dataclass
 class PlaybackUrl:
     url: str
@@ -86,21 +104,6 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
 
         time_module.sleep(0.1 + 0.05 * random.random())
     redis_conn.zadd("concurrent_ytdlp", { video_id: time_module.time() })
-
-    ydl = yt_dlp.YoutubeDL({
-        "retries": 0,
-        "fragment_retries": 0,
-        "extractor_retries": 0,
-        "file_access_retries": 0,
-        "socket_timeout": 15,
-        "remote_components": ["ejs:github"]
-        # "extractor_args": {
-        #     "youtube": {
-        #         "skip": ["dash", "hls", "translated_subs"],
-        #         "player_client": ["tv"]
-        #     }
-        # }
-    })
 
     url = f"https://www.youtube.com/watch?v={video_id}"
     ydl.params["proxy"] = proxy_url
