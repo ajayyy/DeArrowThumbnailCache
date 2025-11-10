@@ -93,6 +93,7 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
         "extractor_retries": 0,
         "file_access_retries": 0,
         "socket_timeout": 15,
+        "remote_components": ["ejs:github"]
         # "extractor_args": {
         #     "youtube": {
         #         "skip": ["dash", "hls", "translated_subs"],
