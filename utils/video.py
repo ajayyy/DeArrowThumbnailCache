@@ -2,11 +2,15 @@ from dataclasses import dataclass
 import random
 import re
 from typing import Any, cast
+import retry
 import yt_dlp # pyright: ignore[reportMissingTypeStubs]
 from utils.config import config
 import utils.floatie as floatie
 import time as time_module
 from utils.redis_handler import redis_conn
+
+class YtdlpRatelimitError(Exception):
+    pass
 
 def create_ytdlp_object():
     return yt_dlp.YoutubeDL({
@@ -92,7 +96,10 @@ def format_has_av1(format: dict[str, str | int]) -> bool:
     return ("mimeType" in format and "av01" in cast(str, format["mimeType"])) \
         or  ("vcodec" in format and "av01" in cast(str, format["vcodec"]))
 
+@retry(YtdlpRatelimitError, tries=2, delay=1)
 def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+    global ydl
+
     wait_time = 0
     while redis_conn.zcard("concurrent_ytdlp") > config["max_concurrent_ytdlp"]:
         print("Waiting for other ytdlp to finish")
@@ -116,5 +123,9 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
             return formats
         else:
             raise ValueError("Failed to parse playback URLs: {video_id}")
+    except Exception as e:
+        if "rate-limited by YouTube for up to an hour" in str(e):
+            ydl = create_ytdlp_object()
+        raise
     finally:
         redis_conn.zrem("concurrent_ytdlp", video_id)
