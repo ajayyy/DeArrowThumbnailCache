@@ -108,7 +108,7 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
             generate_with_ffmpeg(video_id, time, playback_url, is_livestream, proxy_to_use)
             print("generated", time_module.time())
         except FFmpegError:
-            if proxy_url is not None and proxy is not None:
+            if proxy_url is not None and proxy is not None and not config["skip_local_ffmpeg"]:
                 # try again through proxy
                 print(f"Trying to generate again through the proxy {proxy.country_code} {time_module.time()}")
                 generate_with_ffmpeg(video_id, time, playback_url, is_livestream, proxy_url)
@@ -164,9 +164,18 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             video = requests.get(playback_url.url,
                                  timeout=5,
                                  proxies=proxies)
+
+            # If this is a manifest file, download the latest video in the manifest
+            if video.content.startswith("#EXTM3U".encode()):
+                url = video.content.decode().split("\n")[-2]
+                if len(url) > 0:
+                    video = requests.get(url,
+                        timeout=5,
+                        proxies=proxies)
+
             with open(video_filename, "wb") as f:
                 f.write(video.content)
-                print(f"Downloaded livestream video to{video_filename} with size of {len(video.content)}")
+                print(f"Downloaded livestream video to {video_filename} with size of {len(video.content)}")
         except Exception:
             try:
                 os.remove(video_filename)
