@@ -24,6 +24,5 @@ try_floatie: true
 try_ytdlp: true
 # Nebula thumbnail support works via Cloudflare Worker proxy
 # Set nebula_worker_url to enable Nebula thumbnails
-# nebula_worker_url: "https://nebula-thumbnail-worker.example.workers.dev"
-# nebula_worker_auth_secret: "shared-secret-between-server-and-worker"
+# nebula_worker_url: "https://nebula-thumbnail-worker.anoim.workers.dev"
 debug: false
