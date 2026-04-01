@@ -164,4 +164,4 @@ config.yaml
 cache
 .vscode
 
-test-cache
+test-cachedump.rdb

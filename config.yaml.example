@@ -6,6 +6,7 @@ server:
 thumbnail_storage:
   path: "cache"
   max_size: 50000000
+  cleanup_multiplier: 0.9
   redis_offset_allowed: 20
   max_before_async_generation: 15
   max_queue_size: 10000
@@ -21,4 +22,7 @@ status_auth_password: password
 skip_local_ffmpeg: false
 try_floatie: true
 try_ytdlp: true
+# Nebula thumbnail support works via Cloudflare Worker proxy
+# Set nebula_worker_url to enable Nebula thumbnails
+# nebula_worker_url: "https://nebula-thumbnail-worker.anoim.workers.dev"
 debug: false
