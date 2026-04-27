@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 import re
-from typing import Any, cast
+from typing import Any
 import requests
 import json
-from utils.config import config
 
 class InnertubeError(Exception):
     pass
