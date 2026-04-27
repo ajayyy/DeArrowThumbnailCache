@@ -23,21 +23,15 @@ class InnertubeDetails:
 
 innertube_details = InnertubeDetails(
     api_key="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
-    client_version="19.09.36",
+    client_version="2.20230327.07.00",
     client_name="3",
     android_version="12"
 )
 
 context = {
   "client": {
-    "clientName": "ANDROID",
-    "clientVersion": innertube_details.client_version,
-    "androidSdkVersion": 31,
-    "osName": "Android",
-    "osVersion": innertube_details.android_version,
-    "hl": "en",
-    "gl": "US",
-    "visitorData": config["yt_auth"]["visitorData"]
+    "clientName": "WEB",
+    "clientVersion": innertube_details.client_version
   }
 }
 
@@ -67,27 +61,11 @@ def fetch_video_data(video_id: str, proxy_url: str | None) -> dict[str, Any]:
 
     payload = json.dumps({
         "context": context,
-        "videoId": video_id,
-        "playbackContext": {
-            "contentPlaybackContext": {
-                "html5Preference": "HTML5_PREF_WANTS"
-            }
-        },
-        "contentCheckOk": True,
-        "racyCheckOk": True
+        "videoId": video_id
     })
     headers = {
-        'X-Youtube-Client-Name': innertube_details.client_name,
-        'X-Youtube-Client-Version': innertube_details.client_version,
-        'X-Goog-Visitor-Id': visitor_data or cast(str, context["client"]["visitorData"]),
-        'x-goog-api-format-version': '2',
-        'Origin': 'https://www.youtube.com',
-        'User-Agent': f'com.google.android.youtube/{innertube_details.client_version} (Linux; U; Android {innertube_details.android_version}; US) gzip',
-        'Content-Type': 'application/json',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.5',
-        'Sec-Fetch-Mode': 'navigate',
-        'Connection': 'close'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+        'Content-Type': 'application/json'
     }
 
     response = requests.request("POST", url, headers=headers, data=payload, proxies=proxies, timeout=10)
@@ -95,6 +73,14 @@ def fetch_video_data(video_id: str, proxy_url: str | None) -> dict[str, Any]:
         raise InnertubeError(f"Innertube failed with status code {response.status_code}")
 
     data = response.json()
+
+    if data["videoDetails"]["videoId"] != video_id:
+        raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
+
+    return data
+
+def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
+    data = fetch_video_data(video_id, proxy_url)
 
     playability_status = data["playabilityStatus"]["status"]
     if playability_status != "OK":
@@ -104,10 +90,4 @@ def fetch_video_data(video_id: str, proxy_url: str | None) -> dict[str, Any]:
             print(data)
             raise InnertubePlayabilityError(f"Not Playable: {data['playabilityStatus']['status']}")
 
-    if data["videoDetails"]["videoId"] != video_id:
-        raise InnertubeError(f"Innertube returned wrong video ID: {data['videoDetails']['videoId']} vs. {video_id}")
-
-    return data
-
-def fetch_playback_urls(video_id: str, proxy_url: str | None) -> list[dict[str, str | int]]:
-    return fetch_video_data(video_id, proxy_url)["streamingData"]["adaptiveFormats"]
+    return data["streamingData"]["adaptiveFormats"]
