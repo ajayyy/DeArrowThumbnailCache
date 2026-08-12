@@ -48,6 +48,7 @@ class Config(TypedDict):
     front_auth: str | None
     floatie_auth: str | None
     debug: bool
+    randomize_worker_names: bool
 
 
 config: Config = yaml.safe_load(open("config.yaml" if not in_test() else "tests/test_config.yaml"))
@@ -56,3 +57,5 @@ if "proxy_url" not in config:
     config["proxy_url"] = None
 if "proxy_token" not in config:
     config["proxy_token"] = None
+if "randomize_worker_names" not in config:
+    config["randomize_worker_names"] = True
