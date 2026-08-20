@@ -19,13 +19,13 @@ def create_ytdlp_object():
         "extractor_retries": 0,
         "file_access_retries": 0,
         "socket_timeout": 15,
-        "remote_components": ["ejs:github"]
-        # "extractor_args": {
-        #     "youtube": {
-        #         "skip": ["dash", "hls", "translated_subs"],
-        #         "player_client": ["tv"]
-        #     }
-        # }
+        "remote_components": ["ejs:github"],
+        "extractor_args": {
+            "youtube": {
+                # "skip": ["dash", "hls", "translated_subs"],
+                "player_client": ["web_embedded"]
+            }
+        }
     })
 
 ydl = create_ytdlp_object()
