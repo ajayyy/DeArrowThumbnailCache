@@ -127,6 +127,7 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
     wait_time = 0
+    total_wait_seconds = 0
     while redis_conn.zcard("concurrent_renders") > config["max_concurrent_renders"]:
         print("Waiting for other renders to finish")
         wait_time += 1
@@ -135,8 +136,13 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         if wait_time % 10 == 0:
             redis_conn.zremrangebyscore("concurrent_renders", "-inf", time_module.time() - 60)
 
-        time_module.sleep(0.1 + 0.05 * random.random())
+        sleep_time = 0.1 + 0.05 * random.random()
+        total_wait_seconds += sleep_time
+        time_module.sleep(sleep_time)
     redis_conn.zadd("concurrent_renders", { f"{video_id} {time} {is_livestream}": time_module.time() })
+
+    if sleep_time < 3:
+        time_module.sleep(3 - sleep_time)
 
     output_folder, output_filename, _, video_filename = get_file_paths(video_id, time, is_livestream)
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
