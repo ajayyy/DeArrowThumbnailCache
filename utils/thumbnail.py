@@ -141,8 +141,8 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         time_module.sleep(sleep_time)
     redis_conn.zadd("concurrent_renders", { f"{video_id} {time} {is_livestream}": time_module.time() })
 
-    if sleep_time < 3:
-        time_module.sleep(3 - sleep_time)
+    if total_wait_seconds < 3:
+        time_module.sleep(3 - total_wait_seconds)
 
     output_folder, output_filename, _, video_filename = get_file_paths(video_id, time, is_livestream)
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
