@@ -113,6 +113,7 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
     redis_conn.zadd("concurrent_ytdlp", { video_id: time_module.time() })
 
     url = f"https://www.youtube.com/watch?v={video_id}"
+    ydl = create_ytdlp_object()
     ydl.params["proxy"] = proxy_url
 
     try:
