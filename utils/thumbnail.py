@@ -127,7 +127,7 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
     wait_time = 0
-    # time_module.sleep(5)
+    time_module.sleep(5)
     while redis_conn.zcard("concurrent_renders") > config["max_concurrent_renders"]:
         print("Waiting for other renders to finish")
         wait_time += 1
@@ -197,7 +197,6 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                                  headers={"Range": "bytes=0-10000"},
                                  proxies=proxies)
         print(len(test_data.content))
-        print(test_data.content)
 
         run_ffmpeg(
             "-y",
