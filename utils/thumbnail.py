@@ -196,7 +196,8 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                                  timeout=5,
                                  headers={"Range": "bytes=0-10"},
                                  proxies=proxies)
-        print(test_data.status_code)
+        print(len(test_data.content))
+        print(test_data.content)
 
         run_ffmpeg(
             "-y",
@@ -205,7 +206,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
             "-timelimit", "20",
             "-tls_verify", "0",
-            timeout=30,
+            timeout=20,
         )
     except FFmpegError:
         try:
