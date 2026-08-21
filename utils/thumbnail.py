@@ -194,7 +194,7 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         # Now YouTube is forcing some waiting time, check to be sure video is ready
         test_data = requests.get(playback_url.url,
                                  timeout=5,
-                                 headers={"Range": "bytes=0-10"},
+                                 headers={"Range": "bytes=0-10000"},
                                  proxies=proxies)
         print(len(test_data.content))
         print(test_data.content)
