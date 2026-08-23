@@ -12,11 +12,14 @@ from typing import Any
 import time
 from hmac import compare_digest
 from rq.worker import Worker
+from rq.job import Job
 from utils.test_utils import in_test
 import logging
 
-from utils.thumbnail import generate_thumbnail, get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
+from utils.thumbnail import generate_thumbnail, generate_nebula_thumbnail, \
+    get_latest_thumbnail_from_files, get_job_id, get_thumbnail_from_files, set_best_time
 from utils.video import valid_video_id
+from utils.nebula import valid_nebula_slug
 
 app = FastAPI()
 app.add_middleware(
@@ -59,58 +62,20 @@ async def get_thumbnail(response: Response, request: Request,
         # If we got here with a None time, then there is no thumbnail to pull from
         return thumbnail_response_error(redirectUrl, "Thumbnail not cached")
 
+    try:
+        result = await _enqueue_and_wait(
+            job_id=get_job_id(videoID, time),
+            generate_now=generateNow,
+            request=request,
+            enqueue_fn=generate_thumbnail,
+            enqueue_args=(videoID, time, title, isLivestream, not in_test()),
+            label="YouTube",
+        )
+    except TimeoutError:
+        return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to timeout")
 
-    job_id = get_job_id(videoID, time)
-    queue = queue_high if generateNow else queue_low
-
-    job = queue.fetch_job(job_id)
-    other_queue_job = queue_low.fetch_job(job_id) if queue == queue_high else queue_high.fetch_job(job_id)
-    if other_queue_job is not None:
-        if other_queue_job.is_started:
-            # It is already started, use it
-            job = other_queue_job
-        elif queue == queue_high:
-            # Old queue is low, prefer new one
-            queue_low.remove(other_queue_job)
-        elif job is not None:
-            # New queue is low, old queue is high, prefer old one
-            queue.remove(job)
-            job = other_queue_job
-        else:
-            # New queue is low, old queue is high, prefer old one
-            job = other_queue_job
-
-    if job is None or job.is_finished:
-        if len(queue) > config["thumbnail_storage"]["max_queue_size"]:
-            return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to queue being too big")
-
-        # Start the job if it is not already started
-        # TODO: Remove the ttl when proper priority is implemented
-        job = queue.enqueue(generate_thumbnail,
-                        args=(videoID, time, title, isLivestream, not in_test()),
-                        job_id=job_id,
-                        job_timeout=30,
-                        failure_ttl=500,
-                        ttl=60,
-                        at_front="front_auth" in config\
-                            and config["front_auth"] is not None\
-                            and request.headers.get("authorization") == config["front_auth"])
-
-    if job.is_failed:
-        return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail")
-
-    result: bool = False
-    if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
-            and (generateNow or len(queue_high) < config["thumbnail_storage"]["max_before_async_generation"])):
-        try:
-            result = (await wait_for_message(job_id)) == "true"
-        except TimeoutError:
-            log("Failed to generate thumbnail due to timeout")
-            return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail due to timeout")
-    else:
-        log("Thumbnail not generated yet", job.get_position())
+    if result is None:
         return thumbnail_response_error(redirectUrl, "Thumbnail not generated yet")
-
     if result:
         try:
             return await handle_thumbnail_response(videoID, time, isLivestream, title, response)
@@ -118,7 +83,6 @@ async def get_thumbnail(response: Response, request: Request,
             log("Server error when getting thumbnails", e)
             return thumbnail_response_error(redirectUrl, "Server error")
     else:
-        log("Failed to generate thumbnail")
         return thumbnail_response_error(redirectUrl, "Failed to generate thumbnail")
 
 
@@ -142,6 +106,147 @@ def thumbnail_response_error(redirect_url: str | None, text: str) -> Response:
         raise HTTPException(status_code=204, headers={
             "X-Failure-Reason": text
         })
+
+
+# ─── Shared queue management ─────────────────────────────────────────────────
+
+async def _enqueue_and_wait(
+    job_id: str,
+    generate_now: bool,
+    request: Request,
+    enqueue_fn: Any,
+    enqueue_args: tuple,
+    label: str,
+) -> bool | None:
+    """Reconcile queue priorities, enqueue if needed, and wait for result.
+
+    Returns ``True`` if the job succeeded, ``False`` if it failed, or
+    ``None`` with a reason string if the caller should return an error
+    immediately (returned as a tuple ``(None, reason)``).
+    """
+    queue = queue_high if generate_now else queue_low
+
+    job = queue.fetch_job(job_id)
+    other_queue_job: Job | None = (
+        queue_low.fetch_job(job_id) if queue == queue_high
+        else queue_high.fetch_job(job_id)
+    )
+    if other_queue_job is not None:
+        if other_queue_job.is_started:
+            job = other_queue_job
+        elif queue == queue_high:
+            queue_low.remove(other_queue_job)
+        elif job is not None:
+            queue.remove(job)
+            job = other_queue_job
+        else:
+            job = other_queue_job
+
+    if job is None or job.is_finished:
+        if len(queue) > config["thumbnail_storage"]["max_queue_size"]:
+            return None  # caller handles "queue too big"
+
+        job = queue.enqueue(
+            enqueue_fn,
+            args=enqueue_args,
+            job_id=job_id,
+            job_timeout=30,
+            failure_ttl=500,
+            ttl=60,
+            at_front="front_auth" in config
+                and config["front_auth"] is not None
+                and request.headers.get("authorization") == config["front_auth"],
+        )
+
+    if job.is_failed:
+        return False
+
+    if ((job.get_position() or 0) < config["thumbnail_storage"]["max_before_async_generation"]
+            and (generate_now or len(queue_high) < config["thumbnail_storage"]["max_before_async_generation"])):
+        try:
+            return (await wait_for_message(job_id)) == "true"
+        except TimeoutError:
+            log(f"{label} thumbnail generation timed out")
+            raise
+    else:
+        log(f"{label} thumbnail not generated yet", job.get_position())
+        return None
+
+
+# ─── Nebula thumbnails ────────────────────────────────────────────────────────
+
+@app.get("/api/v1/getNebulaThumbnail")
+async def get_nebula_thumbnail(response: Response, request: Request,
+                               videoSlug: str, time: float | None = None,
+                               generateNow: bool = False,
+                               title: str | None = None,
+                               officialTime: bool = False) -> Response:
+    if not config.get("nebula_worker_url"):  # type: ignore[attr-defined]
+        raise HTTPException(status_code=501, detail="Nebula support is not configured")
+
+    if type(videoSlug) is not str or (type(time) is not float and time is not None) \
+            or type(generateNow) is not bool or not valid_nebula_slug(videoSlug):
+        raise HTTPException(status_code=400, detail="Invalid parameters")
+
+    if officialTime and time is not None:
+        await set_best_time(videoSlug, time, nebula=True)
+
+    try:
+        return await handle_nebula_thumbnail_response(videoSlug, time, title, response)
+    except FileNotFoundError:
+        pass
+
+    if time is None:
+        return nebula_thumbnail_response_error("Nebula thumbnail not cached")
+
+    try:
+        result = await _enqueue_and_wait(
+            job_id=get_job_id(videoSlug, time, nebula=True),
+            generate_now=generateNow,
+            request=request,
+            enqueue_fn=generate_nebula_thumbnail,
+            enqueue_args=(videoSlug, time, title, not in_test()),
+            label="Nebula",
+        )
+    except TimeoutError:
+        return nebula_thumbnail_response_error("Failed to generate Nebula thumbnail due to timeout")
+
+    if result is None:
+        return nebula_thumbnail_response_error("Nebula thumbnail not generated yet")
+    if result:
+        try:
+            return await handle_nebula_thumbnail_response(videoSlug, time, title, response)
+        except Exception as e:
+            log("Server error when getting Nebula thumbnails", e)
+            return nebula_thumbnail_response_error("Server error")
+    else:
+        return nebula_thumbnail_response_error("Failed to generate Nebula thumbnail")
+
+
+async def handle_nebula_thumbnail_response(
+    video_slug: str, time: float | None, title: str | None, response: Response
+) -> Response:
+    thumbnail = (
+        await get_thumbnail_from_files(video_slug, time, title=title, nebula=True)
+        if time is not None
+        else await get_latest_thumbnail_from_files(video_slug, nebula=True)
+    )
+    response.headers["X-Timestamp"] = str(thumbnail.time)
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    if thumbnail.title is not None:
+        try:
+            response.headers["X-Title"] = thumbnail.title.strip()
+        except UnicodeEncodeError:
+            pass
+
+    return Response(content=thumbnail.image, media_type="image/webp",
+                    headers=response.headers)
+
+
+def nebula_thumbnail_response_error(text: str) -> Response:
+    raise HTTPException(status_code=204, headers={
+        "X-Failure-Reason": text
+    })
 
 @app.get("/api/v1/status")
 def get_status(includeDefault: bool = True, auth: str | None = None) -> dict[str, Any]:

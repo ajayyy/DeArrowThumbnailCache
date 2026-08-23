@@ -47,6 +47,7 @@ class Config(TypedDict):
     proxy_token: str | None
     front_auth: str | None
     floatie_auth: str | None
+    nebula_worker_url: str | None
     debug: bool
 
 
@@ -56,3 +57,5 @@ if "proxy_url" not in config:
     config["proxy_url"] = None
 if "proxy_token" not in config:
     config["proxy_token"] = None
+if "nebula_worker_url" not in config:
+    config["nebula_worker_url"] = None
