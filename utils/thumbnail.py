@@ -4,6 +4,7 @@ import math
 import os
 import random
 import re
+from subprocess import TimeoutExpired
 import sys
 from typing import cast
 import requests
@@ -124,6 +125,8 @@ def generate_and_store_thumbnail(video_id: str, time: float, is_livestream: bool
     if proxy is not None and proxy.status_url is not None:
         send_success_status(proxy.status_url)
 
+
+@retry(TimeoutExpired, tries=2, delay=1)
 def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
     wait_time = 0
@@ -202,8 +205,6 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                                  headers={"Range": "bytes=1000000-1000100"},
                                  proxies=proxies)
         print(f"code: {test_data_2.status_code} time: {time_module.time() - later_start_time}")
-
-        time_module.sleep(10)
 
         run_ffmpeg(
             "-y",
