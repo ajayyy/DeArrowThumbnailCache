@@ -89,7 +89,7 @@ async def get_thumbnail(response: Response, request: Request,
         job = queue.enqueue(generate_thumbnail,
                         args=(videoID, time, title, isLivestream, not in_test()),
                         job_id=job_id,
-                        job_timeout=30,
+                        job_timeout=60,
                         failure_ttl=500,
                         ttl=60,
                         at_front="front_auth" in config\
