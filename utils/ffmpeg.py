@@ -26,8 +26,8 @@ def run_ffmpeg(*args: str, timeout: float | None = None):
         [ffmpeg_path, *args],
         shell=False,
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        # stdout=subprocess.DEVNULL,
+        # stderr=subprocess.DEVNULL,
         timeout=timeout,
     )
 
