@@ -26,7 +26,7 @@ def create_ytdlp_object():
                 "player_client": ["mweb"],
             },
             "youtubepot-bgutilhttp": {
-                "base_url": config["po_token_generator_url"]
+                "base_url": [config["po_token_generator_url"]]
             }
         }
     })
