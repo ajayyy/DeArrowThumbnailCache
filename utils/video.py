@@ -23,7 +23,7 @@ def create_ytdlp_object():
         "extractor_args": {
             "youtube": {
                 # "skip": ["dash", "hls", "translated_subs"],
-                "player_client": ["mweb"],
+                "player_client": ["web_embedded", "visionos"],
             },
             "youtubepot-bgutilhttp": {
                 "base_url": [config["po_token_generator_url"]]
