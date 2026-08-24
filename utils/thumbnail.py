@@ -194,17 +194,17 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
         http_proxy = ["-http_proxy", proxy_url]
     try:
         # Now YouTube is forcing some waiting time, check to be sure video is ready
-        test_data = requests.get(playback_url.url,
-                                 timeout=5,
-                                 headers={"Range": "bytes=0-10000"},
-                                 proxies=proxies)
-        print(len(test_data.content))
-        later_start_time = time_module.time()
-        test_data_2 = requests.get(playback_url.url,
-                                 timeout=5,
-                                 headers={"Range": "bytes=1000000-1000100"},
-                                 proxies=proxies)
-        print(f"code: {test_data_2.status_code} time: {time_module.time() - later_start_time}")
+        # test_data = requests.get(playback_url.url,
+        #                          timeout=5,
+        #                          headers={"Range": "bytes=0-10000"},
+        #                          proxies=proxies)
+        # print(len(test_data.content))
+        # later_start_time = time_module.time()
+        # test_data_2 = requests.get(playback_url.url,
+        #                          timeout=5,
+        #                          headers={"Range": "bytes=1000000-1000100"},
+        #                          proxies=proxies)
+        # print(f"code: {test_data_2.status_code} time: {time_module.time() - later_start_time}")
 
         run_ffmpeg(
             "-y",

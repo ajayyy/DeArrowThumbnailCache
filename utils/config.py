@@ -45,6 +45,7 @@ class Config(TypedDict):
     proxy_url: str | None
     proxy_urls: list[ProxyInfoConfig] | None
     proxy_token: str | None
+    po_token_generator_url: str | None
     front_auth: str | None
     floatie_auth: str | None
     debug: bool

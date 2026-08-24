@@ -13,3 +13,8 @@ services:
       - net.core.somaxconn=324000
       - net.ipv4.tcp_max_syn_backlog=3240000
     restart: always
+  bgutil-provider:
+    container_name: bgutil-provider
+    image: brainicism/bgutil-ytdlp-pot-provider
+    network_mode: host
+    restart: always
