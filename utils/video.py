@@ -25,7 +25,7 @@ def create_ytdlp_object():
                 # "skip": ["dash", "hls", "translated_subs"],
                 "player_client": ["mweb"],
             },
-            "youtubepot-bgutil": {
+            "youtubepot-bgutilhttp": {
                 "base_url": config["po_token_generator_url"]
             }
         }
