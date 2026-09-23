@@ -1,10 +1,14 @@
 # DeArrow Thumbnail Cache
-
 This server acts as a cache for recently used generated thumbnails.
 
-# Hosting yourself
+## Configuration options
+Make sure to copy `config.yaml.example` into `config.yaml`. You can eventually configure as you want by parameters modification.
 
-The easiest way to host it yourself is using the docker images. Here is a sample compose file to get started. Make sure to copy `config.yaml.example` into `config.yaml`.
+### Config parameters
+* `thumbnail_storage.max_cache` lets you configure cache size and control container's volume size. 
+
+## Hosting yourself
+The easiest way to host it yourself is starting a service by using Docker containers. Here is a sample compose file to get started.
 
 ```yaml
 version: '3'
@@ -44,12 +48,12 @@ volumes:
     external: true
 ```
 
-# Running Locally
+## Running Locally
 
-`app.py` contains a web server where clients can request screenshots at specific timestamps. If it is not already generated, it can request generation through a redis queue.
+By running `app.py` Python script, you start a web server where clients can request screenshots at specific timestamps. If it is not already generated, it can request generation through a Redis queue.
 
-To run the worker, run `worker.py`.
+To run the worker, run `python worker.py`.
 
-### License
+## License
 
 AGPL-3.0
