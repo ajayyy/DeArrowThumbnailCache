@@ -14,6 +14,8 @@ redis:
   port: 32774
 yt_auth:
   visitorData: "Cgt0bkJPQ1poV1VUZyiniom3BjIKCgJDQRIEGgAgGA%3D%3D"
+player_clients:
+  - "mweb"
 default_max_height: 720
 max_concurrent_renders: 5
 max_concurrent_ytdlp: 5
