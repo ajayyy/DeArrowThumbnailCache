@@ -136,7 +136,7 @@ async def handle_thumbnail_response(video_id: str, time: float | None, is_livest
     return Response(content=thumbnail.image, media_type="image/webp", headers=response.headers)
 
 def thumbnail_response_error(redirect_url: str | None, text: str) -> Response:
-    if redirect_url is not None and redirect_url.startswith("https://i.ytimg.com"):
+    if redirect_url is not None and redirect_url.startswith("https://i.ytimg.com/"):
         return RedirectResponse(redirect_url)
     else:
         raise HTTPException(status_code=204, headers={
