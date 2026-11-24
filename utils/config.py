@@ -58,3 +58,11 @@ if "proxy_url" not in config:
     config["proxy_url"] = None
 if "proxy_token" not in config:
     config["proxy_token"] = None
+if "po_token_generator_url" not in config:
+    config["po_token_generator_url"] = None
+if "player_clients" not in config:
+    config["player_clients"] = None
+if "front_auth" not in config:
+    config["front_auth"] = None
+if "floatie_auth" not in config:
+    config["floatie_auth"] = None
