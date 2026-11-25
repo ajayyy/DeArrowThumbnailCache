@@ -40,6 +40,7 @@ class Config(TypedDict):
     try_floatie_for_live: bool
     try_ytdlp: bool
     skip_local_ffmpeg: bool
+    ffmpeg_timeout: int
     max_concurrent_renders: int
     max_concurrent_ytdlp: int
     proxy_url: str | None
@@ -66,3 +67,5 @@ if "front_auth" not in config:
     config["front_auth"] = None
 if "floatie_auth" not in config:
     config["floatie_auth"] = None
+if "ffmpeg_timeout" not in config:
+    config["ffmpeg_timeout"] = 20

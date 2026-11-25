@@ -211,8 +211,8 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
             *http_proxy,
             "-ss", str(rounded_time), "-i", video_filename if is_livestream else playback_url.url,
             "-vframes", "1", "-lossless", "0", "-pix_fmt", "bgra", output_filename,
-            "-timelimit", "20",
-            timeout=20,
+            "-timelimit", str(config["ffmpeg_timeout"]),
+            timeout=config["ffmpeg_timeout"],
         )
     except FFmpegError:
         try:
