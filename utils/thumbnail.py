@@ -131,14 +131,14 @@ def generate_with_ffmpeg(video_id: str, time: float, playback_url: PlaybackUrl,
                             is_livestream: bool, proxy_url: str | None = None) -> None:
     wait_time = 0
     while redis_conn.zcard("concurrent_renders") > config["max_concurrent_renders"]:
-        print("Waiting for other renders to finish")
-        wait_time += 1
+        print(f"Waiting for other renders to finish: {wait_time}s")
+        sleep_time = 1 + 0.05 * random.random()
+        wait_time += sleep_time
 
-        # Remove expired items every second
-        if wait_time % 10 == 0:
-            redis_conn.zremrangebyscore("concurrent_renders", "-inf", time_module.time() - 60)
+        # Remove expired items
+        redis_conn.zremrangebyscore("concurrent_renders", "-inf", time_module.time() - 60)
 
-        time_module.sleep(0.1 + 0.05 * random.random())
+        time_module.sleep(sleep_time)
     redis_conn.zadd("concurrent_renders", { f"{video_id} {time} {is_livestream}": time_module.time() })
 
     output_folder, output_filename, _, video_filename = get_file_paths(video_id, time, is_livestream)
