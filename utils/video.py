@@ -105,14 +105,14 @@ def fetch_playback_urls_from_ytdlp(video_id: str, proxy_url: str | None) -> list
 
     wait_time = 0
     while redis_conn.zcard("concurrent_ytdlp") > config["max_concurrent_ytdlp"]:
-        print("Waiting for other ytdlp to finish")
-        wait_time += 1
+        print(f"Waiting for other ytdlp to finish: {wait_time}s")
+        sleep_time = 1 + 0.05 * random.random()
+        wait_time += sleep_time
 
-        # Remove expired items every second
-        if wait_time % 10 == 0:
-            redis_conn.zremrangebyscore("concurrent_ytdlp", "-inf", time_module.time() - 60)
+        # Remove expired items every 10 seconds
+        redis_conn.zremrangebyscore("concurrent_ytdlp", "-inf", time_module.time() - 60)
 
-        time_module.sleep(0.1 + 0.05 * random.random())
+        time_module.sleep(sleep_time)
     redis_conn.zadd("concurrent_ytdlp", { video_id: time_module.time() })
 
     url = f"https://www.youtube.com/watch?v={video_id}"
